@@ -2,11 +2,17 @@ export type VisualMode = 'NORMAL' | 'CRT' | 'NVG' | 'FLIR' | 'DRONE' | 'GREEN';
 
 export type LayerName = 'flights' | 'earthquakes' | 'satellites' | 'traffic' | 'weather' | 'cctv';
 
+export interface Landmark {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export interface City {
   name: string;
   lat: number;
   lon: number;
-  landmarks: string[];
+  landmarks: Landmark[];
 }
 
 export interface LayerConfig {

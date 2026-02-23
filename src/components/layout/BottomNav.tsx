@@ -10,7 +10,7 @@ import { BOTTOM_MODES } from "@/constants/modes";
 import { CITIES } from "@/constants/cities";
 import ModeButton from "@/components/ui/ModeButton";
 import { SFX } from "@/utils/audioEngine";
-import type { VisualMode } from "@/types";
+import type { VisualMode, Landmark } from "@/types";
 
 export default function BottomNav() {
   const currentCity = useMapStore((s) => s.currentCity);
@@ -23,10 +23,15 @@ export default function BottomNav() {
   const accent = MODE_ACCENTS[currentMode];
   const [animateActive, setAnimateActive] = useState(false);
   const [refsActive, setRefsActive] = useState(false);
+  const [activeLandmarkIdx, setActiveLandmarkIdx] = useState(0);
   const animateRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const activeCity = CITIES.find((c) => c.name === currentCity) || CITIES[0];
-  const breadcrumbs = aiBreadcrumbs.length > 0 ? aiBreadcrumbs : activeCity.landmarks;
+
+  // Convert AI breadcrumbs (strings) to Landmark format, or use city landmarks
+  const landmarks: Landmark[] = aiBreadcrumbs.length > 0
+    ? aiBreadcrumbs.map((name) => ({ name, lat: activeCity.lat, lon: activeCity.lon }))
+    : activeCity.landmarks;
 
   // ANIMATE mode: auto-rotate the globe
   useEffect(() => {
@@ -48,12 +53,14 @@ export default function BottomNav() {
   const handleCityClick = (city: typeof CITIES[number]) => {
     SFX.flyTo();
     setCity(city.name);
+    setActiveLandmarkIdx(0);
     flyTo(city.lat, city.lon, 5);
   };
 
-  const handleLandmarkClick = () => {
-    SFX.click();
-    flyTo(activeCity.lat, activeCity.lon, 2);
+  const handleLandmarkClick = (landmark: Landmark, idx: number) => {
+    SFX.flyTo();
+    setActiveLandmarkIdx(idx);
+    flyTo(landmark.lat, landmark.lon, 1.5);
   };
 
   const handleModeClick = (m: typeof BOTTOM_MODES[number]) => {
@@ -89,19 +96,19 @@ export default function BottomNav() {
         >
           LOCATION
         </span>
-        {breadcrumbs.map((landmark, i) => (
+        {landmarks.map((landmark, i) => (
           <button
-            key={landmark}
-            onClick={() => handleLandmarkClick()}
-            className="rounded-sm px-2 py-[2px] text-[7px] transition-colors"
+            key={landmark.name}
+            onClick={() => handleLandmarkClick(landmark, i)}
+            className="rounded-sm px-2 py-[2px] text-[7px] transition-colors cursor-pointer hover:brightness-125"
             style={{
-              backgroundColor: i === 0 ? accent : "transparent",
-              color: i === 0 ? "#000" : "var(--text-inactive)",
-              border: i === 0 ? "none" : "1px solid rgba(255,255,255,0.15)",
-              fontWeight: i === 0 ? 700 : 400,
+              backgroundColor: i === activeLandmarkIdx ? accent : "transparent",
+              color: i === activeLandmarkIdx ? "#000" : "var(--text-inactive)",
+              border: i === activeLandmarkIdx ? "none" : "1px solid rgba(255,255,255,0.15)",
+              fontWeight: i === activeLandmarkIdx ? 700 : 400,
             }}
           >
-            {landmark}
+            {landmark.name}
           </button>
         ))}
       </div>

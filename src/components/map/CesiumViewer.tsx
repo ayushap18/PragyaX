@@ -83,13 +83,20 @@ export default function CesiumViewer() {
 
       // Camera constraints — keep the globe centered and smooth
       const controller = viewer.scene.screenSpaceCameraController;
-      controller.minimumZoomDistance = 500;          // min 500m above surface
-      controller.maximumZoomDistance = 40_000_000;   // max 40,000km out
+      controller.minimumZoomDistance = 200;           // min 200m above surface
+      controller.maximumZoomDistance = 40_000_000;    // max 40,000km out
       controller.enableTilt = true;
-      controller.enableLook = false;                 // prevent free-look that dislodges globe
-      controller.inertiaSpin = 0.9;                  // smooth spin deceleration
-      controller.inertiaTranslate = 0.9;             // smooth translate deceleration
-      controller.inertiaZoom = 0.8;                  // smooth zoom deceleration
+      controller.enableLook = false;                  // prevent free-look that dislodges globe
+      controller.inertiaSpin = 0.9;                   // smooth spin deceleration
+      controller.inertiaTranslate = 0.9;              // smooth translate deceleration
+      controller.inertiaZoom = 0.85;                  // smooth zoom deceleration
+      controller.zoomEventTypes = [
+        Cesium.CameraEventType.WHEEL,
+        Cesium.CameraEventType.PINCH,
+      ];
+      // Slow down the scroll-wheel zoom speed
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any)._zoomFactor = 3;
 
       // Clamp tilt so camera never goes below horizon (keeps globe visible)
       viewer.scene.postRender.addEventListener(() => {

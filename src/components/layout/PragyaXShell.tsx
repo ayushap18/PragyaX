@@ -14,10 +14,12 @@ import EarthquakeLayer from "@/components/layers/EarthquakeLayer";
 import SatelliteLayer from "@/components/layers/SatelliteLayer";
 import WeatherLayer from "@/components/layers/WeatherLayer";
 import CCTVLayer from "@/components/layers/CCTVLayer";
+import GraticuleLayer from "@/components/layers/GraticuleLayer";
 import DataPollingManager from "@/components/data/DataPollingManager";
 import CommandModal from "@/components/panels/CommandModal";
 import CCTVPanel from "@/components/panels/CCTVPanel";
 import EntityDetail from "@/components/panels/EntityDetail";
+import MiniGlobe from "@/components/map/MiniGlobe";
 
 const CesiumViewer = dynamic(
   () => import("@/components/map/CesiumViewer"),
@@ -58,10 +60,12 @@ export default function PragyaXShell() {
           <SatelliteLayer />
           <WeatherLayer />
           <CCTVLayer />
+          <GraticuleLayer />
           <DataPollingManager />
           <CommandModal />
           <CCTVPanel />
           <EntityDetail />
+          <MiniGlobe />
         </>
       )}
     </div>
