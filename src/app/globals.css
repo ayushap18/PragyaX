@@ -206,3 +206,103 @@
   75% { background-position: 50% 100%; }
   100% { background-position: 0 0; }
 }
+
+/* ═══════════════════════════════════════════
+   CHANAKYA MODE ANIMATIONS
+   ═══════════════════════════════════════════ */
+
+/* Saffron glow pulse for Chanakya elements */
+@keyframes saffron-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(255, 153, 51, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 153, 51, 0.5), 0 0 24px rgba(255, 153, 51, 0.15);
+  }
+}
+.animate-saffron-glow {
+  animation: saffron-glow 3s ease-in-out infinite;
+}
+
+/* Threat zone pulse */
+@keyframes threat-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+.animate-threat-pulse {
+  animation: threat-pulse 2s ease-in-out infinite;
+}
+
+/* Data stream slide-in for intel feed */
+@keyframes data-stream-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-data-stream {
+  animation: data-stream-in 0.5s ease-out forwards;
+}
+
+/* Ashoka Chakra slow rotation */
+@keyframes chakra-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.animate-chakra-rotate {
+  animation: chakra-rotate 360s linear infinite;
+}
+
+/* Tricolor bar shimmer */
+@keyframes tricolor-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-tricolor-shimmer {
+  background: linear-gradient(
+    90deg,
+    #FF9933 0%, #FF9933 30%,
+    #FFFFFF 40%, #FFFFFF 60%,
+    #138808 70%, #138808 100%
+  );
+  background-size: 200% 100%;
+  animation: tricolor-shimmer 6s linear infinite;
+}
+
+/* Chanakya-specific saffron grid dot pattern */
+.bg-grid-dots-saffron {
+  background-image: radial-gradient(circle, rgba(255, 153, 51, 0.06) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/* Chanakya corner brackets (saffron) */
+.corner-brackets-saffron::before,
+.corner-brackets-saffron::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: rgba(255, 153, 51, 0.3);
+  border-style: solid;
+  pointer-events: none;
+}
+.corner-brackets-saffron::before {
+  top: 0;
+  left: 0;
+  border-width: 1px 0 0 1px;
+}
+.corner-brackets-saffron::after {
+  bottom: 0;
+  right: 0;
+  border-width: 0 1px 1px 0;
+}

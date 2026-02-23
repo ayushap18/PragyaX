@@ -1,6 +1,6 @@
-export type VisualMode = 'NORMAL' | 'CRT' | 'NVG' | 'FLIR' | 'DRONE' | 'GREEN';
+export type VisualMode = 'NORMAL' | 'CRT' | 'NVG' | 'FLIR' | 'DRONE' | 'GREEN' | 'CHANAKYA';
 
-export type LayerName = 'flights' | 'earthquakes' | 'satellites' | 'traffic' | 'weather' | 'cctv';
+export type LayerName = 'flights' | 'earthquakes' | 'satellites' | 'traffic' | 'weather' | 'cctv' | 'aqi' | 'isro' | 'borders' | 'strategic';
 
 export interface Landmark {
   name: string;
@@ -190,4 +190,56 @@ export interface APIError {
   code: string;
   message: string;
   retryAfterMs?: number;
+}
+
+// ── Chanakya Mode Types ──
+
+export interface AQIStation {
+  id: string;
+  stationName: string;
+  city: string;
+  state: string;
+  lat: number;
+  lon: number;
+  aqi: number;
+  pm25: number | null;
+  pm10: number | null;
+  no2: number | null;
+  so2: number | null;
+  co: number | null;
+  o3: number | null;
+  nh3: number | null;
+  lastUpdated: string;
+}
+
+export interface AQIResponse {
+  count: number;
+  stations: AQIStation[];
+  cached: boolean;
+  source: string;
+}
+
+export interface StrategicNode {
+  name: string;
+  lat: number;
+  lon: number;
+  type: 'military' | 'naval' | 'space' | 'research' | 'intelligence' | 'nuclear' | 'port';
+}
+
+export interface BorderZone {
+  name: string;
+  label: string;
+  status: string;
+  threat: string;
+  lat: number;
+  lon: number;
+  color: string;
+}
+
+export interface IntelEntry {
+  id: string;
+  timestamp: string;
+  classification: 'S' | 'TS' | 'C';
+  message: string;
+  category: 'FLIGHT' | 'SEISMIC' | 'BORDER' | 'AQI' | 'ISRO' | 'GENERAL';
 }

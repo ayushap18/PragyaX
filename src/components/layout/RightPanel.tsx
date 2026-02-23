@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useModeStore } from "@/stores/modeStore";
 import { useHUDStore } from "@/stores/hudStore";
 import { MODE_ACCENTS } from "@/constants/modes";
@@ -13,6 +14,7 @@ export default function RightPanel() {
   const setOptic = useModeStore((s) => s.setOptic);
   const accent = MODE_ACCENTS[currentMode];
   const utcTime = useHUDStore((s) => s.utcTime);
+  const [sessionId] = useState(() => Math.floor(Date.now() / 100000) % 10000);
 
   return (
     <div
@@ -172,19 +174,19 @@ export default function RightPanel() {
           ACTIONS
         </span>
         <div className="grid grid-cols-2 gap-[2px]">
-          <PanelActionBtn label="FEED ID" accent={accent} onClick={() => SFX.click()} />
-          <PanelActionBtn label="COVERAGE" accent={accent} onClick={() => SFX.click()} />
-          <PanelActionBtn label="PREDICTION" accent={accent} onClick={() => SFX.click()} />
-          <PanelActionBtn label="ALIGN" accent={accent} onClick={() => SFX.click()} />
-          <PanelActionBtn label="BRIEF" accent={accent} onClick={() => SFX.click()} />
-          <PanelActionBtn label="NEXT SAT" accent={accent} onClick={() => SFX.click()} />
+          <PanelActionBtn label="FEED ID" onClick={() => SFX.click()} />
+          <PanelActionBtn label="COVERAGE" onClick={() => SFX.click()} />
+          <PanelActionBtn label="PREDICTION" onClick={() => SFX.click()} />
+          <PanelActionBtn label="ALIGN" onClick={() => SFX.click()} />
+          <PanelActionBtn label="BRIEF" onClick={() => SFX.click()} />
+          <PanelActionBtn label="NEXT SAT" onClick={() => SFX.click()} />
         </div>
       </div>
 
       {/* Session info */}
       <div className="mt-auto px-3 py-2 flex flex-col gap-[2px]" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <span className="text-[5px] tabular-nums" style={{ color: "var(--text-dim)" }}>
-          SESSION: PX-{Math.floor(Date.now() / 100000) % 10000}
+          SESSION: PX-{sessionId}
         </span>
         <span className="text-[5px] tabular-nums" style={{ color: `${accent}40` }}>
           CLEARANCE: TS/SCI
@@ -194,7 +196,7 @@ export default function RightPanel() {
   );
 }
 
-function PanelActionBtn({ label, accent, onClick }: { label: string; accent: string; onClick: () => void }) {
+function PanelActionBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}

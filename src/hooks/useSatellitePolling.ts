@@ -22,9 +22,24 @@ export function useSatellitePolling() {
 
     async function poll() {
       try {
-        const data = await fetchSatelliteTLEs('stations');
-        setSatelliteTLEs(data.satellites);
-        setCount('satellites', data.count);
+        // Fetch both standard stations AND Indian satellites in parallel
+        const [stationsData, indianData] = await Promise.all([
+          fetchSatelliteTLEs('stations').catch(() => ({ satellites: [], count: 0 })),
+          fetchSatelliteTLEs('indian').catch(() => ({ satellites: [], count: 0 })),
+        ]);
+
+        // Merge and deduplicate by noradId
+        const seen = new Set<number>();
+        const merged = [];
+        for (const sat of [...stationsData.satellites, ...indianData.satellites]) {
+          if (!seen.has(sat.noradId)) {
+            seen.add(sat.noradId);
+            merged.push(sat);
+          }
+        }
+
+        setSatelliteTLEs(merged);
+        setCount('satellites', merged.length);
       } catch (err) {
         console.warn('Satellite poll failed:', err);
       }

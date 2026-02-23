@@ -267,6 +267,8 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
   const [visibleLines, setVisibleLines] = useState(0);
   const [fading, setFading] = useState(false);
   const [phase, setPhase] = useState(0);
+  const [sessionCode] = useState(() => Math.random().toString(36).slice(2, 10).toUpperCase());
+  const [bootTimestamp] = useState(() => new Date().toISOString().slice(0, 19));
   const progress = Math.min(visibleLines / ALL_LINES.length, 1);
 
   useEffect(() => {
@@ -385,10 +387,10 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
               OPERATOR: AUTHORIZED
             </span>
             <span className="text-[6px] tracking-[1px]" style={{ color: "rgba(200,230,255,0.3)" }}>
-              SESSION: {Math.random().toString(36).slice(2, 10).toUpperCase()}
+              SESSION: {sessionCode}
             </span>
             <span className="text-[6px] tracking-[1px] tabular-nums" style={{ color: "rgba(200,230,255,0.3)" }}>
-              {new Date().toISOString().slice(0, 19)}Z
+              {bootTimestamp}Z
             </span>
           </div>
         </div>

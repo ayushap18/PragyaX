@@ -22,15 +22,10 @@ export default function CCTVPanel() {
   const [predictionOn, setPredictionOn] = useState(false);
 
   useEffect(() => {
-    if (!selectedCamera) {
-      setAnalysis(null);
-      setError(null);
-      return;
-    }
+    if (!selectedCamera) return;
 
     let cancelled = false;
     setAnalyzing(true);
-    setError(null);
 
     analyzeFrame({
       cameraId: selectedCamera.id,
@@ -43,11 +38,13 @@ export default function CCTVPanel() {
       .then((result) => {
         if (!cancelled) {
           setAnalysis(result);
+          setError(null);
           setAnalyzing(false);
         }
       })
       .catch((err) => {
         if (!cancelled) {
+          setAnalysis(null);
           setError(err instanceof Error ? err.message : "Analysis failed");
           setAnalyzing(false);
         }
@@ -238,7 +235,7 @@ export default function CCTVPanel() {
           </span>
         )}
 
-        {error && (
+        {error && !isAnalyzing && (
           <span className="text-[7px] font-bold" style={{ color: "#FF3333" }}>
             ERROR: {error}
           </span>

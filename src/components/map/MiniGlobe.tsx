@@ -35,6 +35,28 @@ function projectOrtho(
   return [cx + x, cy - y, true];
 }
 
+/** Inverse orthographic: canvas (px, py) → (lon, lat) or null if outside globe */
+function inverseOrtho(
+  px: number, py: number,
+  centerLon: number, centerLat: number,
+  radius: number, cx: number, cy: number
+): [number, number] | null {
+  const RAD = Math.PI / 180;
+  const DEG = 180 / Math.PI;
+  const xn = (px - cx) / radius;
+  const yn = -(py - cy) / radius;
+  const rho = Math.sqrt(xn * xn + yn * yn);
+  if (rho > 1) return null; // outside globe
+  const c = Math.asin(rho);
+  const sinC = Math.sin(c);
+  const cosC = Math.cos(c);
+  const sinCLat = Math.sin(centerLat * RAD);
+  const cosCLat = Math.cos(centerLat * RAD);
+  const lat = Math.asin(cosC * sinCLat + (yn * sinC * cosCLat) / (rho || 1)) * DEG;
+  const lon = centerLon + Math.atan2(xn * sinC, rho * cosCLat * cosC - yn * sinCLat * sinC) * DEG;
+  return [lon, lat];
+}
+
 export default function MiniGlobe() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
@@ -44,11 +66,13 @@ export default function MiniGlobe() {
 
   // Independent rotation state for the mini globe
   const [globeCenter, setGlobeCenter] = useState({ lon: 0, lat: 20 });
+  const [isDragging, setIsDragging] = useState(false);
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, lon: 0, lat: 0 });
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     dragging.current = true;
+    setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY, lon: globeCenter.lon, lat: globeCenter.lat };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   }, [globeCenter]);
@@ -62,11 +86,42 @@ export default function MiniGlobe() {
     setGlobeCenter({ lon: newLon, lat: newLat });
   }, []);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!dragging.current) return;
     dragging.current = false;
+    setIsDragging(false);
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    // If pointer barely moved, treat as a click → fly main globe there
+    if (dist < 4) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const canvasY = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const W = canvas.width;
+      const H = canvas.height;
+      const cx = W / 2;
+      const cy = H / 2;
+      const R = Math.min(W, H) / 2 - 3;
+      const result = inverseOrtho(canvasX, canvasY, globeCenter.lon, globeCenter.lat, R, cx, cy);
+      if (result) {
+        const [lon, lat] = result;
+        useMapStore.getState().flyTo(lat, lon, 5);
+      }
+    }
+  }, [globeCenter]);
+
+  const handlePointerLeave = useCallback(() => {
+    dragging.current = false;
+    setIsDragging(false);
   }, []);
 
-  const draw = useCallback(() => {
+  const drawRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    drawRef.current = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -255,13 +310,12 @@ export default function MiniGlobe() {
     ctx.font = "4px monospace";
     ctx.fillText(`${cLat.toFixed(0)}°N ${Math.abs(cLon % 360).toFixed(0)}°${cLon >= 0 ? 'E' : 'W'}`, cx, 7);
 
-    animRef.current = requestAnimationFrame(draw);
-  }, [accent, globeCenter]);
+    animRef.current = requestAnimationFrame(() => drawRef.current?.());
+    };
 
-  useEffect(() => {
-    animRef.current = requestAnimationFrame(draw);
+    animRef.current = requestAnimationFrame(() => drawRef.current?.());
     return () => cancelAnimationFrame(animRef.current);
-  }, [draw]);
+  }, [accent, globeCenter]);
 
   return (
     <div
@@ -272,7 +326,7 @@ export default function MiniGlobe() {
         overflow: "hidden",
         width: 110,
         height: 110,
-        cursor: dragging.current ? "grabbing" : "grab",
+        cursor: isDragging ? "grabbing" : "crosshair",
       }}
     >
       <canvas
@@ -283,7 +337,7 @@ export default function MiniGlobe() {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
       />
     </div>
   );

@@ -31,7 +31,7 @@ export default function LayerToggle({ id, label, icon }: LayerToggleProps) {
 
   return (
     <button
-      onClick={() => { enabled ? SFX.layerOff() : SFX.layerOn(); toggleLayer(id); }}
+      onClick={() => { if (enabled) { SFX.layerOff(); } else { SFX.layerOn(); } toggleLayer(id); }}
       className="flex w-full items-center justify-between px-3 transition-colors"
       style={{
         height: 32,

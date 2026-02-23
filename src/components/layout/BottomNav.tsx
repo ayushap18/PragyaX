@@ -68,6 +68,9 @@ export default function BottomNav() {
     if (m.mode === 'AI') {
       SFX.commandOpen();
       setCommandModalOpen(true);
+    } else if (m.mode === 'CHANAKYA') {
+      SFX.modeSwitch();
+      useModeStore.getState().activateChanakya();
     } else if (m.mode === 'ANIMATE') {
       SFX.toggle();
       setAnimateActive((prev) => !prev);

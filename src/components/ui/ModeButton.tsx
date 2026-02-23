@@ -2,7 +2,6 @@
 
 import { useModeStore } from "@/stores/modeStore";
 import { MODE_ACCENTS } from "@/constants/modes";
-import type { VisualMode } from "@/types";
 
 interface ModeButtonProps {
   mode: string;

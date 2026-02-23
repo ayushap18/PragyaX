@@ -11,7 +11,51 @@ const GROUP_URLS: Record<string, string> = {
   starlink: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json',
   'gps-ops': 'https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=json',
   visual: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=json',
+  resource: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=json',
+  geo: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=geo&FORMAT=json',
+  gnss: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=gnss&FORMAT=json',
+  science: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=science&FORMAT=json',
+  // 'indian' is a virtual group — handled specially below
 };
+
+// Celestrak NAME queries for Indian satellites (synced with ISRO_SATELLITE_PATTERNS in constants/chanakya.ts)
+const INDIAN_SAT_NAMES = [
+  'IRNSS', 'NAVIC', 'CARTOSAT', 'RESOURCESAT', 'OCEANSAT',
+  'INSAT', 'GSAT', 'RISAT', 'EOS-', 'ASTROSAT',
+  'SARAL', 'SCATSAT', 'EMISAT', 'MICROSAT', 'HAMSAT',
+  'ANUSAT', 'NISAR', 'PRATHAM', 'KALAMSAT',
+];
+
+async function fetchIndianSatellites(): Promise<Record<string, unknown>[]> {
+  const results: Record<string, unknown>[] = [];
+  const seen = new Set<number>();
+
+  // Fetch from multiple name queries in parallel
+  const fetches = INDIAN_SAT_NAMES.map(async (name) => {
+    try {
+      const url = `https://celestrak.org/NORAD/elements/gp.php?NAME=${encodeURIComponent(name)}&FORMAT=json`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const batches = await Promise.all(fetches);
+  for (const batch of batches) {
+    for (const sat of batch) {
+      const noradId = sat.NORAD_CAT_ID as number;
+      if (!seen.has(noradId)) {
+        seen.add(noradId);
+        results.push(sat);
+      }
+    }
+  }
+
+  return results;
+}
 
 interface SatelliteTLE {
   name: string;
@@ -83,8 +127,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const group = searchParams.get('group') || 'stations';
 
-  if (!GROUP_URLS[group]) {
-    return errorResponse('INVALID_GROUP', `Unknown group: ${group}. Valid: ${Object.keys(GROUP_URLS).join(', ')}`, 400);
+  if (group !== 'indian' && !GROUP_URLS[group]) {
+    return errorResponse('INVALID_GROUP', `Unknown group: ${group}. Valid: ${Object.keys(GROUP_URLS).join(', ')}, indian`, 400);
   }
 
   const cacheKey = `satellites-${group}`;
@@ -99,13 +143,19 @@ export async function GET(request: Request) {
   }
 
   try {
-    const res = await fetch(GROUP_URLS[group], { signal: AbortSignal.timeout(30000) });
+    let ommData: Record<string, unknown>[];
 
-    if (!res.ok) {
-      return errorResponse('UPSTREAM_ERROR', `Celestrak returned ${res.status}`, 502);
+    if (group === 'indian') {
+      // Special handler: fetch ISRO satellites by name queries
+      ommData = await fetchIndianSatellites();
+    } else {
+      const res = await fetch(GROUP_URLS[group], { signal: AbortSignal.timeout(30000) });
+      if (!res.ok) {
+        return errorResponse('UPSTREAM_ERROR', `Celestrak returned ${res.status}`, 502);
+      }
+      ommData = await res.json();
+      if (!Array.isArray(ommData)) ommData = [];
     }
-
-    const ommData = await res.json();
     const satellites: SatelliteTLE[] = (Array.isArray(ommData) ? ommData : []).map(
       (omm: Record<string, unknown>) => {
         const meanMotion = (omm.MEAN_MOTION as number) || 0;
