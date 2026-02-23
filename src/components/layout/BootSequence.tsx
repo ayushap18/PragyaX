@@ -17,6 +17,7 @@ const PHASE_2_LINES = [
   { text: "[DRVR] GPU compute pipeline initialized .......... OK", delay: 1200, color: "#00FF41" },
   { text: "[NETW] Establishing TLS 1.3 tunnel ............... OK", delay: 1500, color: "#00FF41" },
   { text: "[AUTH] Verifying clearance: TS/SCI-TK-GAMMA ...... OK", delay: 1800, color: "#00FF41" },
+  { text: "[SEC ] SYSTEM INTEGRITY CHECK .................. VERIFIED", delay: 1900, color: "#00FF41" },
 ];
 
 const PHASE_3_LINES = [

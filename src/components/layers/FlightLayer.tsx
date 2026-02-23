@@ -96,6 +96,9 @@ export default function FlightLayer() {
       }
     });
     entityIdsRef.current = currentIds;
+
+    // Trigger a frame render
+    viewer.scene.requestRender();
   }, [viewer, cesium, flights, enabled]);
 
   return null;

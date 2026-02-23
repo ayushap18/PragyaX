@@ -41,7 +41,8 @@ export default function CesiumViewer() {
         timeline: false,
         navigationHelpButton: false,
         navigationInstructionsInitiallyVisible: false,
-        requestRenderMode: false,
+        requestRenderMode: true,
+        maximumRenderTimeChange: Infinity,
         targetFrameRate: 60,
         shadows: false,
       });

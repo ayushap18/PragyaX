@@ -18,9 +18,11 @@ interface HUDState {
   latency: number;
   lastUpdate: number;
   intelFeed: IntelEvent[];
+  showSystemStatus: boolean;
   updateClock: () => void;
   setFps: (fps: number) => void;
   simulateTick: () => void;
+  toggleSystemStatus: () => void;
 }
 
 let eventId = 0;
@@ -59,9 +61,11 @@ export const useHUDStore = create<HUDState>((set, get) => ({
   latency: 12,
   lastUpdate: 0,
   intelFeed: [],
+  showSystemStatus: false,
   updateClock: () =>
     set({ utcTime: new Date().toISOString().slice(11, 19) + 'Z' }),
   setFps: (fps) => set({ fps }),
+  toggleSystemStatus: () => set((state) => ({ showSystemStatus: !state.showSystemStatus })),
   simulateTick: () => {
     const state = get();
     const now = Date.now();

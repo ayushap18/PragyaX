@@ -106,6 +106,8 @@ export default function SatelliteLayer() {
           // Skip failed propagations
         }
       }
+
+      viewer.scene.requestRender();
     }
 
     // Initial update

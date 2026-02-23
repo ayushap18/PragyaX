@@ -30,6 +30,8 @@ import ChanakyaRightPanel from "@/components/chanakya/ChanakyaRightPanel";
 import ChanakyaBottomNav from "@/components/chanakya/ChanakyaBottomNav";
 import ISROMissionClock from "@/components/chanakya/ISROMissionClock";
 import { useChanakyaMode } from "@/hooks/useChanakyaMode";
+import { useHUDStore } from "@/stores/hudStore";
+import SystemStatus from "@/components/panels/SystemStatus";
 
 const CesiumViewer = dynamic(
   () => import("@/components/map/CesiumViewer"),
@@ -40,6 +42,7 @@ export default function PragyaXShell() {
   const [booted, setBooted] = useState(false);
   // Manages auto-fly, layer toggling on mode switch
   const { isChanakya } = useChanakyaMode();
+  const showSystemStatus = useHUDStore((s) => s.showSystemStatus);
 
   const handleBootComplete = useCallback(() => {
     setBooted(true);
@@ -103,6 +106,7 @@ export default function PragyaXShell() {
           <CommandModal />
           <CCTVPanel />
           <EntityDetail />
+          {showSystemStatus && <SystemStatus />}
         </>
       )}
     </div>
