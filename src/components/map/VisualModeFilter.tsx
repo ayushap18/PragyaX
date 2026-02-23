@@ -137,9 +137,9 @@ export default function VisualModeFilter() {
         />
       )}
 
-      {/* Subtle edge glow matching mode */}
+      {/* Subtle edge glow matching mode — breathing vignette */}
       <div
-        className="pointer-events-none absolute inset-0 z-[2]"
+        className="pointer-events-none absolute inset-0 z-[2] animate-vignette-breathe"
         style={{
           background: `radial-gradient(
             ellipse at center,

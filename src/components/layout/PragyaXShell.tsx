@@ -29,7 +29,10 @@ import ChanakyaLeftPanel from "@/components/chanakya/ChanakyaLeftPanel";
 import ChanakyaRightPanel from "@/components/chanakya/ChanakyaRightPanel";
 import ChanakyaBottomNav from "@/components/chanakya/ChanakyaBottomNav";
 import ISROMissionClock from "@/components/chanakya/ISROMissionClock";
+import AlertToast from "@/components/ui/AlertToast";
+import ShortcutOverlay from "@/components/ui/ShortcutOverlay";
 import { useChanakyaMode } from "@/hooks/useChanakyaMode";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const CesiumViewer = dynamic(
   () => import("@/components/map/CesiumViewer"),
@@ -38,8 +41,12 @@ const CesiumViewer = dynamic(
 
 export default function PragyaXShell() {
   const [booted, setBooted] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   // Manages auto-fly, layer toggling on mode switch
   const { isChanakya } = useChanakyaMode();
+
+  // Global keyboard shortcuts
+  useKeyboardShortcuts(booted, showShortcuts, setShowShortcuts);
 
   const handleBootComplete = useCallback(() => {
     setBooted(true);
@@ -63,6 +70,7 @@ export default function PragyaXShell() {
       {booted && (
         <>
           <TopHUD />
+          <AlertToast />
 
           {/* Standard WORLDVIEW panels */}
           {!isChanakya && (
@@ -103,6 +111,9 @@ export default function PragyaXShell() {
           <CommandModal />
           <CCTVPanel />
           <EntityDetail />
+
+          {/* Shortcut overlay */}
+          {showShortcuts && <ShortcutOverlay onClose={() => setShowShortcuts(false)} />}
         </>
       )}
     </div>

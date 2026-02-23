@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDataStore } from "@/stores/dataStore";
 import { useLayerStore } from "@/stores/layerStore";
 import { useHUDStore } from "@/stores/hudStore";
 import { CHANAKYA_COLORS, ISRO_SATELLITE_PATTERNS, CYCLONE_WATCH, NODE_TYPE_COLORS } from "@/constants/chanakya";
+import { SIGINT_FREQUENCIES, SIGINT_INTERCEPTS, SIGINT_STATUS_COLORS } from "@/constants/sigintData";
+import { HUMINT_NETWORKS, HUMINT_STATUS_COLORS, HUMINT_RELIABILITY_COLORS } from "@/constants/humintData";
+import { CYBER_THREATS, CYBER_SEVERITY_COLORS, FIREWALL_STATUS } from "@/constants/cyberData";
+import { EMITTER_DATABASE, EMITTER_TYPE_COLORS } from "@/constants/elintData";
+import { MASINT_SENSORS, MASINT_ANOMALY_COLOR, MASINT_NORMAL_COLOR } from "@/constants/masintData";
 import { SFX } from "@/utils/audioEngine";
 import type { LayerName } from "@/types";
 
@@ -68,7 +73,7 @@ export default function ChanakyaRightPanel() {
 
   return (
     <div
-      className="fixed bottom-[110px] right-0 top-6 z-10 flex w-[220px] flex-col overflow-y-auto overflow-x-hidden scrollbar-hide"
+      className="fixed bottom-[110px] right-0 top-[38px] z-10 flex w-[220px] flex-col overflow-y-auto overflow-x-hidden scrollbar-hide"
       style={{
         backgroundColor: CHANAKYA_COLORS.panel,
         borderLeft: `1px solid ${saffron}20`,
@@ -164,11 +169,11 @@ export default function ChanakyaRightPanel() {
                 {isroSats.length} ISRO satellites tracked
               </span>
             )}
-            {!['RECON', 'OSINT', 'GEOINT'].includes(selectedOp) && (
-              <span className="text-[6px]" style={{ color: `${saffron}50` }}>
-                {selectedOp} module active — awaiting data stream...
-              </span>
-            )}
+            {selectedOp === 'SIGINT' && <SigintPanel />}
+            {selectedOp === 'HUMINT' && <HumintPanel />}
+            {selectedOp === 'CYBER' && <CyberPanel />}
+            {selectedOp === 'ELINT' && <ElintPanel />}
+            {selectedOp === 'MASINT' && <MasintPanel />}
           </div>
         </div>
       )}
@@ -304,6 +309,185 @@ export default function ChanakyaRightPanel() {
             सत्यमेव जयते
           </span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   SIGINT Panel — Signal Intelligence
+   ═══════════════════════════════════════════ */
+function SigintPanel() {
+  const [interceptIdx, setInterceptIdx] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setInterceptIdx((p) => (p + 1) % SIGINT_INTERCEPTS.length);
+    }, 3000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-[3px]">
+      <span className="text-[5px] tracking-[1px]" style={{ color: `${saffron}40` }}>FREQUENCIES</span>
+      {SIGINT_FREQUENCIES.map((f) => (
+        <div key={f.freq} className="flex items-center gap-1">
+          <span className="text-[5px] tabular-nums w-[50px]" style={{ color: `${saffron}50` }}>{f.freq}</span>
+          <div className="flex-1 h-[3px] rounded-full" style={{ backgroundColor: `${saffron}15` }}>
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${f.strength}%`, backgroundColor: SIGINT_STATUS_COLORS[f.status] }}
+            />
+          </div>
+          <span className="text-[4px]" style={{ color: SIGINT_STATUS_COLORS[f.status] }}>{f.status}</span>
+        </div>
+      ))}
+      <div className="mt-1" style={{ borderTop: `1px solid ${saffron}15` }}>
+        <span className="text-[5px] tracking-[1px]" style={{ color: `${saffron}40` }}>INTERCEPT LOG</span>
+        <p className="text-[5px] mt-[2px] animate-data-stream" style={{ color: `${saffron}60` }}>
+          {SIGINT_INTERCEPTS[interceptIdx]}
+        </p>
+      </div>
+      <div className="h-[12px] rounded-sm mt-1 animate-waterfall" />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   HUMINT Panel — Human Intelligence
+   ═══════════════════════════════════════════ */
+function HumintPanel() {
+  const active = HUMINT_NETWORKS.filter((n) => n.status === 'ACTIVE').length;
+  return (
+    <div className="flex flex-col gap-[3px]">
+      <span className="text-[5px] tracking-[1px]" style={{ color: `${saffron}40` }}>NETWORK ROSTER</span>
+      {HUMINT_NETWORKS.map((n) => (
+        <div key={n.codename} className="flex items-center gap-1">
+          <div
+            className="h-[4px] w-[4px] rounded-full shrink-0"
+            style={{
+              backgroundColor: HUMINT_STATUS_COLORS[n.status],
+              boxShadow: n.status === 'ACTIVE' ? `0 0 3px ${HUMINT_STATUS_COLORS[n.status]}` : 'none',
+            }}
+          />
+          <span className="text-[6px] font-bold w-[40px]" style={{ color: `${saffron}70` }}>{n.codename}</span>
+          <span className="text-[5px] w-[35px]" style={{ color: `${saffron}40` }}>{n.sector}</span>
+          <span
+            className="text-[5px] ml-auto px-1 rounded-sm"
+            style={{ backgroundColor: `${HUMINT_RELIABILITY_COLORS[n.reliability]}20`, color: HUMINT_RELIABILITY_COLORS[n.reliability] }}
+          >
+            {n.reliability}
+          </span>
+        </div>
+      ))}
+      <div className="mt-1 pt-1" style={{ borderTop: `1px solid ${saffron}15` }}>
+        <span className="text-[5px]" style={{ color: `${saffron}50` }}>
+          HANDLER STATUS: {HUMINT_NETWORKS.length} NETWORKS / {active} ACTIVE
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   CYBER Panel — Cyber Defense
+   ═══════════════════════════════════════════ */
+function CyberPanel() {
+  return (
+    <div className="flex flex-col gap-[3px]">
+      <span className="text-[5px] tracking-[1px]" style={{ color: `${saffron}40` }}>THREAT MATRIX</span>
+      {CYBER_THREATS.map((t) => (
+        <div key={t.vector} className="flex items-center gap-1">
+          <span className="text-[5px] w-[40px]" style={{ color: CYBER_SEVERITY_COLORS[t.severity] }}>{t.vector}</span>
+          <span className="text-[5px] tabular-nums w-[16px]" style={{ color: `${saffron}40` }}>{t.origin}</span>
+          <div className="flex-1 h-[3px] rounded-full" style={{ backgroundColor: `${saffron}10` }}>
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${Math.min(100, t.blocked / 15)}%`, backgroundColor: CYBER_SEVERITY_COLORS[t.severity] }}
+            />
+          </div>
+          <span className="text-[4px] tabular-nums" style={{ color: `${saffron}50` }}>{t.blocked}</span>
+        </div>
+      ))}
+      <div className="mt-1 pt-1 flex flex-col gap-[1px]" style={{ borderTop: `1px solid ${saffron}15` }}>
+        <span className="text-[5px]" style={{ color: `${saffron}40` }}>FIREWALL: {FIREWALL_STATUS.rules} RULES</span>
+        <span className="text-[5px]" style={{ color: `${saffron}40` }}>BLOCKED 24H: {FIREWALL_STATUS.blocked24h}</span>
+        <span className="text-[5px]" style={{ color: MASINT_NORMAL_COLOR }}>UPTIME: {FIREWALL_STATUS.uptime}</span>
+      </div>
+      <div className="h-[3px] rounded-full mt-1" style={{ backgroundColor: `${saffron}10` }}>
+        <div className="h-full rounded-full animate-traffic-bar" style={{ backgroundColor: `${saffron}40` }} />
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   ELINT Panel — Electronic Intelligence
+   ═══════════════════════════════════════════ */
+function ElintPanel() {
+  const unknown = EMITTER_DATABASE.filter((e) => e.classification === 'UNIDENT').length;
+  const classified = EMITTER_DATABASE.length - unknown;
+  return (
+    <div className="flex flex-col gap-[3px]">
+      <span className="text-[5px] tracking-[1px]" style={{ color: `${saffron}40` }}>EMITTER DATABASE</span>
+      {EMITTER_DATABASE.map((e) => (
+        <div key={e.type} className="flex items-center gap-1">
+          <span
+            className="text-[7px] shrink-0"
+            style={{
+              color: EMITTER_TYPE_COLORS[e.type],
+              transform: `rotate(${parseInt(e.bearing)}deg)`,
+              display: 'inline-block',
+            }}
+          >
+            &#9650;
+          </span>
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-[5px] truncate" style={{ color: EMITTER_TYPE_COLORS[e.type] }}>{e.type}</span>
+            <span className="text-[4px]" style={{ color: `${saffron}40` }}>{e.classification} / {e.band}</span>
+          </div>
+          <span className="text-[4px] shrink-0 tabular-nums" style={{ color: `${saffron}50` }}>{e.range}</span>
+        </div>
+      ))}
+      <div className="mt-1 pt-1" style={{ borderTop: `1px solid ${saffron}15` }}>
+        <span className="text-[5px]" style={{ color: `${saffron}50` }}>
+          THREAT EMITTERS: {classified} CLASSIFIED / {unknown} UNKNOWN
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   MASINT Panel — Measurement & Signature
+   ═══════════════════════════════════════════ */
+function MasintPanel() {
+  const anomalyCount = MASINT_SENSORS.filter((s) => s.anomaly).length;
+  return (
+    <div className="flex flex-col gap-[3px]">
+      <span className="text-[5px] tracking-[1px]" style={{ color: `${saffron}40` }}>SENSOR ARRAY</span>
+      {MASINT_SENSORS.map((s) => (
+        <div key={s.type} className="flex items-center gap-1">
+          <div
+            className={`h-[4px] w-[4px] rounded-full shrink-0 ${s.anomaly ? 'animate-blink-rec' : ''}`}
+            style={{
+              backgroundColor: s.anomaly ? MASINT_ANOMALY_COLOR : MASINT_NORMAL_COLOR,
+              boxShadow: s.anomaly ? `0 0 4px ${MASINT_ANOMALY_COLOR}` : 'none',
+            }}
+          />
+          <span className="text-[5px] w-[38px]" style={{ color: s.anomaly ? MASINT_ANOMALY_COLOR : `${saffron}60` }}>
+            {s.type}
+          </span>
+          <span className="text-[5px] flex-1 truncate" style={{ color: s.anomaly ? '#FF6666' : `${saffron}40` }}>
+            {s.reading}
+          </span>
+        </div>
+      ))}
+      <div className="mt-1 pt-1" style={{ borderTop: `1px solid ${saffron}15` }}>
+        <span className="text-[5px]" style={{ color: anomalyCount > 0 ? MASINT_ANOMALY_COLOR : `${saffron}50` }}>
+          SENSORS: {MASINT_SENSORS.length} ACTIVE / {anomalyCount} ANOMALY
+        </span>
       </div>
     </div>
   );

@@ -135,4 +135,16 @@ export const SFX = {
     playTone(1000, 0.04, "sine", 0.04);
     setTimeout(() => playTone(1400, 0.06, "sine", 0.04), 50);
   },
+
+  // Biometric scan
+  biometricScan: () => {
+    playTone(200, 0.4, "sine", 0.03);
+    setTimeout(() => playTone(300, 0.3, "sine", 0.03), 200);
+    setTimeout(() => playTone(400, 0.2, "sine", 0.04), 500);
+  },
+  biometricSuccess: () => {
+    playTone(600, 0.1, "sine", 0.06);
+    setTimeout(() => playTone(900, 0.1, "sine", 0.07), 120);
+    setTimeout(() => playTone(1200, 0.2, "sine", 0.08), 240);
+  },
 };

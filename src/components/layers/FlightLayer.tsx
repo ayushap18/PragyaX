@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useCesiumStore } from '@/stores/cesiumStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useLayerStore } from '@/stores/layerStore';
+import { useTrailStore } from '@/stores/trailStore';
 import { createAircraftCanvas } from '@/utils/cesiumHelpers';
 
 export default function FlightLayer() {
@@ -12,22 +13,30 @@ export default function FlightLayer() {
   const flights = useDataStore((s) => s.flights);
   const enabled = useLayerStore((s) => s.layers.flights.enabled);
   const entityIdsRef = useRef<Set<string>>(new Set());
+  const trailIdsRef = useRef<Set<string>>(new Set());
   const canvasCacheRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (!viewer || !cesium) return;
 
     if (!enabled) {
-      // Remove all flight entities
+      // Remove all flight entities and trails
       entityIdsRef.current.forEach((id) => {
         const entity = viewer.entities.getById(id);
         if (entity) viewer.entities.remove(entity);
       });
+      trailIdsRef.current.forEach((id) => {
+        const entity = viewer.entities.getById(id);
+        if (entity) viewer.entities.remove(entity);
+      });
       entityIdsRef.current.clear();
+      trailIdsRef.current.clear();
+      useTrailStore.getState().clearAll();
       return;
     }
 
     const currentIds = new Set<string>();
+    const currentTrailIds = new Set<string>();
 
     for (const ac of flights) {
       if (ac.onGround || !ac.lat || !ac.lon) continue;
@@ -40,6 +49,9 @@ export default function FlightLayer() {
         ac.lat,
         ac.altitudeM
       );
+
+      // Push to trail store
+      useTrailStore.getState().pushPosition(ac.icao24, ac.lat, ac.lon, ac.altitudeM);
 
       // Color by altitude: brighter at higher altitude
       const altNorm = Math.min(ac.altitudeFt / 45000, 1);
@@ -86,6 +98,36 @@ export default function FlightLayer() {
           },
         });
       }
+
+      // Render trail polyline
+      const trailData = useTrailStore.getState().trails.get(ac.icao24);
+      if (trailData && trailData.length >= 2) {
+        const trailId = `trail-${ac.icao24}`;
+        currentTrailIds.add(trailId);
+
+        const positions = trailData.map((p) =>
+          cesium.Cartesian3.fromDegrees(p.lon, p.lat, p.alt)
+        );
+
+        const existingTrail = viewer.entities.getById(trailId);
+        if (existingTrail) {
+          if (existingTrail.polyline) {
+            existingTrail.polyline.positions = new cesium.ConstantProperty(positions);
+          }
+        } else {
+          viewer.entities.add({
+            id: trailId,
+            polyline: {
+              positions,
+              width: 1.5,
+              material: new cesium.PolylineGlowMaterialProperty({
+                glowPower: 0.15,
+                color: cesium.Color.fromCssColorString(`rgba(0, ${g}, ${b}, 0.4)`),
+              }),
+            },
+          });
+        }
+      }
     }
 
     // Remove stale entities
@@ -93,9 +135,21 @@ export default function FlightLayer() {
       if (!currentIds.has(id)) {
         const entity = viewer.entities.getById(id);
         if (entity) viewer.entities.remove(entity);
+        // Clear trail data for removed aircraft
+        const icao24 = id.replace('flight-', '');
+        useTrailStore.getState().clearTrail(icao24);
       }
     });
+    // Remove stale trail entities
+    trailIdsRef.current.forEach((id) => {
+      if (!currentTrailIds.has(id)) {
+        const entity = viewer.entities.getById(id);
+        if (entity) viewer.entities.remove(entity);
+      }
+    });
+
     entityIdsRef.current = currentIds;
+    trailIdsRef.current = currentTrailIds;
   }, [viewer, cesium, flights, enabled]);
 
   return null;

@@ -306,3 +306,138 @@
   right: 0;
   border-width: 0 1px 1px 0;
 }
+
+/* ═══════════════════════════════════════════
+   CLASSIFICATION & INTEL ENHANCEMENTS
+   ═══════════════════════════════════════════ */
+
+/* Classification banner blink */
+@keyframes classification-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-classification-blink {
+  animation: classification-blink 2s ease-in-out infinite;
+}
+
+/* Slide in from right for toast notifications */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* Fade out for toast dismiss */
+@keyframes fade-out {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(30px); }
+}
+.animate-fade-out {
+  animation: fade-out 0.3s ease-in forwards;
+}
+
+/* Uplink pulse for signal arcs */
+@keyframes uplink-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.animate-uplink-1 { animation: uplink-pulse 1.5s ease-in-out infinite; }
+.animate-uplink-2 { animation: uplink-pulse 1.5s ease-in-out infinite 0.2s; }
+.animate-uplink-3 { animation: uplink-pulse 1.5s ease-in-out infinite 0.4s; }
+
+/* Breathing vignette */
+@keyframes vignette-breathe {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+.animate-vignette-breathe {
+  animation: vignette-breathe 6s ease-in-out infinite;
+}
+
+/* Signal waterfall for SIGINT */
+@keyframes waterfall-scroll {
+  from { background-position: 0 0; }
+  to { background-position: 0 20px; }
+}
+.animate-waterfall {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 100, 0.05) 0px,
+    rgba(0, 255, 100, 0.15) 2px,
+    rgba(0, 200, 255, 0.05) 4px,
+    transparent 6px,
+    transparent 10px
+  );
+  background-size: 100% 20px;
+  animation: waterfall-scroll 2s linear infinite;
+}
+
+/* Network traffic bar for CYBER */
+@keyframes traffic-flow {
+  0% { width: 30%; }
+  25% { width: 70%; }
+  50% { width: 45%; }
+  75% { width: 85%; }
+  100% { width: 30%; }
+}
+.animate-traffic-bar {
+  animation: traffic-flow 3s ease-in-out infinite;
+}
+
+/* Panel chrome - 4-corner bracket decorations */
+.panel-chrome {
+  position: relative;
+}
+.panel-chrome::before,
+.panel-chrome::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-style: solid;
+  pointer-events: none;
+  z-index: 1;
+}
+.panel-chrome::before {
+  top: 0;
+  left: 0;
+  border-width: 1px 0 0 1px;
+  border-color: rgba(0, 200, 255, 0.25);
+}
+.panel-chrome::after {
+  top: 0;
+  right: 0;
+  border-width: 1px 1px 0 0;
+  border-color: rgba(0, 200, 255, 0.25);
+}
+
+/* Section marker for military document headers */
+.section-marker {
+  position: relative;
+  padding-left: 8px;
+}
+.section-marker::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 10px;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+/* Hatch border top divider */
+.hatch-border-top {
+  border-top: 3px solid transparent;
+  border-image: repeating-linear-gradient(
+    90deg,
+    rgba(0, 200, 255, 0.15) 0px,
+    rgba(0, 200, 255, 0.15) 4px,
+    transparent 4px,
+    transparent 8px
+  ) 3;
+}

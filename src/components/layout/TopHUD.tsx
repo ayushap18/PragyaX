@@ -49,14 +49,37 @@ export default function TopHUD() {
 
   const chanakyaAccent = '#FF9933';
 
+  const feedQuality = useHUDStore((s) => s.feedQuality);
+  const latency = useHUDStore((s) => s.latency);
+
   return (
-    <div
-      className="fixed left-0 right-0 top-0 z-20 flex h-6 items-center justify-between px-3"
-      style={{
-        backgroundColor: "var(--bg-panel)",
-        borderBottom: `1px solid ${activeWindow === 'CHANAKYA' ? chanakyaAccent + '30' : 'var(--border-subtle)'}`,
-      }}
-    >
+    <>
+      {/* Classification Banner */}
+      <div
+        className="fixed left-0 right-0 top-0 z-30 flex h-[14px] items-center justify-center"
+        style={{
+          backgroundColor: activeWindow === 'CHANAKYA' ? 'rgba(255,153,51,0.08)' : 'rgba(255,0,0,0.08)',
+          borderBottom: `1px solid ${activeWindow === 'CHANAKYA' ? 'rgba(255,153,51,0.2)' : 'rgba(255,0,0,0.2)'}`,
+        }}
+      >
+        <span
+          className="animate-classification-blink text-[7px] font-bold tracking-[3px]"
+          style={{ color: activeWindow === 'CHANAKYA' ? 'rgba(255,153,51,0.8)' : 'rgba(255,60,60,0.8)' }}
+        >
+          {activeWindow === 'CHANAKYA'
+            ? 'अत्यन्त गोपनीय // RESTRICTED // BHARAT ONLY'
+            : 'TOP SECRET // SI-TK // NOFORN'}
+        </span>
+      </div>
+
+      {/* Main HUD Bar */}
+      <div
+        className="fixed left-0 right-0 top-[14px] z-20 flex h-6 items-center justify-between px-3"
+        style={{
+          backgroundColor: "var(--bg-panel)",
+          borderBottom: `1px solid ${activeWindow === 'CHANAKYA' ? chanakyaAccent + '30' : 'var(--border-subtle)'}`,
+        }}
+      >
       {/* Left: Logo + Window Tabs + live status */}
       <div className="flex items-center gap-2">
         <div
@@ -106,13 +129,7 @@ export default function TopHUD() {
           {activeWindow === 'CHANAKYA' ? 'STRATEGIC INTELLIGENCE NETWORK' : 'GEOSPATIAL INTELLIGENCE SYSTEM'}
         </span>
         <div className="mx-2 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
-        <span className="text-[6px] tracking-wider" style={{ color: activeWindow === 'CHANAKYA' ? chanakyaAccent : "var(--accent-green)" }}>
-          {activeWindow === 'CHANAKYA' ? 'अर्थशास्त्र ACTIVE' : 'UPLINK ACTIVE'}
-        </span>
-        <div
-          className="h-[3px] w-[3px] rounded-full animate-blink-rec"
-          style={{ backgroundColor: activeWindow === 'CHANAKYA' ? chanakyaAccent : "var(--accent-green)" }}
-        />
+        <UplinkIndicator color={activeWindow === 'CHANAKYA' ? chanakyaAccent : "var(--accent-green)"} label={activeWindow === 'CHANAKYA' ? 'अर्थशास्त्र' : 'UPLINK'} />
         {tickerMessages.length > 0 && activeWindow === 'WORLDVIEW' && (
           <>
             <div className="mx-2 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
@@ -133,12 +150,16 @@ export default function TopHUD() {
         <MetricChip label="CPU" value={`${cpu}%`} color={cpu < 50 ? accent : "var(--accent-amber)"} />
         <MetricChip label="MEM" value={`${mem}%`} color={mem < 80 ? accent : "var(--accent-amber)"} />
         <MetricChip label="ENT" value={entityCount.toLocaleString()} color={accent} />
+        <MetricChip label="LAT" value={`${latency}ms`} color={latency < 20 ? "var(--accent-green)" : "var(--accent-amber)"} />
+        <MetricChip label="FEED" value={`${feedQuality}%`} color={feedQuality > 97 ? "var(--accent-green)" : "var(--accent-amber)"} />
+        <MetricChip label="NET" value="SECURE" color="var(--accent-green)" />
         <div className="mx-1 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
         <span className="animate-counter-tick text-[9px] font-bold tabular-nums" style={{ color: activeWindow === 'CHANAKYA' ? chanakyaAccent : accent }}>
           {utcTime}
         </span>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -150,6 +171,47 @@ function MetricChip({ label, value, color }: { label: string; value: string; col
       </span>
       <span className="text-[8px] font-bold tabular-nums" style={{ color }}>
         {value}
+      </span>
+    </div>
+  );
+}
+
+function UplinkIndicator({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-[5px]">
+      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+        {/* Arc 1 — smallest, fastest pulse */}
+        <path
+          d="M4.5 8 A2.5 2.5 0 0 1 7.5 8"
+          stroke={color}
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          fill="none"
+          className="animate-uplink-1"
+        />
+        {/* Arc 2 — medium */}
+        <path
+          d="M3 6.5 A4 4 0 0 1 9 6.5"
+          stroke={color}
+          strokeWidth="1"
+          strokeLinecap="round"
+          fill="none"
+          className="animate-uplink-2"
+        />
+        {/* Arc 3 — largest, delayed */}
+        <path
+          d="M1.5 5 A5.5 5.5 0 0 1 10.5 5"
+          stroke={color}
+          strokeWidth="0.8"
+          strokeLinecap="round"
+          fill="none"
+          className="animate-uplink-3"
+        />
+        {/* Base dot */}
+        <circle cx="6" cy="9" r="1" fill={color} />
+      </svg>
+      <span className="text-[6px] tracking-wider" style={{ color }}>
+        {label} ACTIVE
       </span>
     </div>
   );

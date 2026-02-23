@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { SFX } from "@/utils/audioEngine";
+
+// ── Auth phase duration ──
+const AUTH_DURATION = 2000;
 
 // ── Boot phases ──
 const PHASE_1_LINES = [
@@ -44,7 +47,164 @@ const FINAL_LINES = [
 ];
 
 const ALL_LINES = [...PHASE_1_LINES, ...PHASE_2_LINES, ...PHASE_3_LINES, ...PHASE_4_LINES, ...FINAL_LINES];
-const TOTAL_DURATION = 6200;
+const BOOT_DURATION = 6200;
+
+// ── Biometric Auth Phase ──
+function AuthPhase({ onComplete }: { onComplete: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+  const startTime = useRef(0);
+  const [authStep, setAuthStep] = useState<'scanning' | 'verified'>('scanning');
+  const [sessionCode] = useState(() => Math.random().toString(36).slice(2, 10).toUpperCase());
+
+  useEffect(() => {
+    startTime.current = Date.now();
+    SFX.biometricScan();
+    const verifyTimer = setTimeout(() => {
+      setAuthStep('verified');
+      SFX.biometricSuccess();
+    }, 1400);
+    const completeTimer = setTimeout(() => onComplete(), AUTH_DURATION);
+    return () => {
+      clearTimeout(verifyTimer);
+      clearTimeout(completeTimer);
+    };
+  }, [onComplete]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const size = 160;
+    canvas.width = size;
+    canvas.height = size;
+    const cx = size / 2;
+    const cy = size / 2;
+
+    function draw() {
+      if (!ctx) return;
+      const elapsed = (Date.now() - startTime.current) / 1000;
+      ctx.clearRect(0, 0, size, size);
+
+      const isVerified = authStep === 'verified';
+      const baseColor = isVerified ? '0,255,65' : '0,255,209';
+
+      // Outer ring
+      ctx.strokeStyle = `rgba(${baseColor},${isVerified ? 0.6 : 0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Expanding scan rings
+      if (!isVerified) {
+        for (let i = 0; i < 3; i++) {
+          const ringProgress = ((elapsed * 0.8 + i * 0.33) % 1);
+          const ringRadius = 10 + ringProgress * 50;
+          const alpha = (1 - ringProgress) * 0.4;
+          ctx.strokeStyle = `rgba(${baseColor},${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Scanning line
+        const scanY = cy - 35 + (Math.sin(elapsed * 3) * 0.5 + 0.5) * 70;
+        ctx.strokeStyle = `rgba(${baseColor},0.5)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 30, scanY);
+        ctx.lineTo(cx + 30, scanY);
+        ctx.stroke();
+      }
+
+      // Fingerprint abstract arcs
+      ctx.strokeStyle = `rgba(${baseColor},${isVerified ? 0.4 : 0.15})`;
+      ctx.lineWidth = 0.8;
+      for (let i = 0; i < 9; i++) {
+        const r = 6 + i * 4.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, -0.8 + i * 0.08, 0.8 + i * 0.08);
+        ctx.stroke();
+      }
+
+      // Verified flash + checkmark
+      if (isVerified) {
+        // Green glow
+        const glowAlpha = 0.15 + Math.sin(elapsed * 4) * 0.05;
+        ctx.fillStyle = `rgba(0,255,65,${glowAlpha})`;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 50, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Checkmark
+        ctx.strokeStyle = 'rgba(0,255,65,0.9)';
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00FF41';
+        ctx.beginPath();
+        ctx.moveTo(cx - 14, cy);
+        ctx.lineTo(cx - 4, cy + 12);
+        ctx.lineTo(cx + 16, cy - 12);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // Corner marks
+      const m = 8;
+      const len = 12;
+      ctx.strokeStyle = `rgba(${baseColor},0.3)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(m, m + len); ctx.lineTo(m, m); ctx.lineTo(m + len, m); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(size - m - len, m); ctx.lineTo(size - m, m); ctx.lineTo(size - m, m + len); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(m, size - m - len); ctx.lineTo(m, size - m); ctx.lineTo(m + len, size - m); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(size - m - len, size - m); ctx.lineTo(size - m, size - m); ctx.lineTo(size - m, size - m - len); ctx.stroke();
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+
+    draw();
+    return () => cancelAnimationFrame(animRef.current);
+  }, [authStep]);
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <canvas ref={canvasRef} style={{ width: 160, height: 160 }} />
+
+      <div className="flex flex-col items-center gap-2">
+        <span
+          className="text-[9px] font-bold tracking-[3px]"
+          style={{ color: authStep === 'verified' ? '#00FF41' : '#00FFD1' }}
+        >
+          {authStep === 'verified' ? 'IDENTITY VERIFIED' : 'BIOMETRIC SCAN'}
+        </span>
+
+        <div className="flex flex-col items-center gap-[3px]">
+          <AuthLine label="CLEARANCE" value="TS/SCI-TK-GAMMA" show={true} verified={authStep === 'verified'} />
+          <AuthLine label="OPERATOR" value="AUTHORIZED" show={true} verified={authStep === 'verified'} />
+          <AuthLine label="SESSION" value={sessionCode} show={true} verified={authStep === 'verified'} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthLine({ label, value, show, verified }: { label: string; value: string; show: boolean; verified: boolean }) {
+  if (!show) return null;
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-[6px] tracking-[1px] w-[60px] text-right" style={{ color: 'rgba(200,230,255,0.3)' }}>
+        {label}
+      </span>
+      <span className="text-[7px] font-bold tabular-nums" style={{ color: verified ? '#00FF41' : '#00FFD180' }}>
+        {value}
+      </span>
+    </div>
+  );
+}
 
 // ── Radar scope canvas ──
 function RadarScope({ progress, phase }: { progress: number; phase: number }) {
@@ -264,6 +424,7 @@ function StatusBar({ label, value, maxValue, color, delay }: { label: string; va
 }
 
 export default function BootSequence({ onComplete }: { onComplete: () => void }) {
+  const [authDone, setAuthDone] = useState(false);
   const [visibleLines, setVisibleLines] = useState(0);
   const [fading, setFading] = useState(false);
   const [phase, setPhase] = useState(0);
@@ -271,7 +432,13 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
   const [bootTimestamp] = useState(() => new Date().toISOString().slice(0, 19));
   const progress = Math.min(visibleLines / ALL_LINES.length, 1);
 
+  const handleAuthComplete = useCallback(() => {
+    setAuthDone(true);
+  }, []);
+
   useEffect(() => {
+    if (!authDone) return;
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     ALL_LINES.forEach((line, i) => {
@@ -298,11 +465,11 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
     timers.push(setTimeout(() => { setPhase(3); SFX.bootScan(); }, 3200));
     timers.push(setTimeout(() => setPhase(4), 4500));
 
-    timers.push(setTimeout(() => setFading(true), TOTAL_DURATION - 800));
-    timers.push(setTimeout(() => onComplete(), TOTAL_DURATION));
+    timers.push(setTimeout(() => setFading(true), BOOT_DURATION - 800));
+    timers.push(setTimeout(() => onComplete(), BOOT_DURATION));
 
     return () => timers.forEach(clearTimeout);
-  }, [onComplete]);
+  }, [authDone, onComplete]);
 
   return (
     <div
@@ -318,83 +485,92 @@ export default function BootSequence({ onComplete }: { onComplete: () => void })
         }}
       />
 
-      {/* Main content */}
-      <div className="relative flex items-center gap-8">
-        {/* Left: Radar scope */}
-        <div className="relative flex flex-col items-center gap-2">
-          <RadarScope progress={progress} phase={phase} />
-          <span className="text-[8px] tracking-[3px] animate-pulse-slow" style={{ color: "#00FFD180" }}>
-            {phase < 3 ? "SCANNING" : phase < 4 ? "ACQUIRING" : "LOCKED"}
-          </span>
+      {/* Auth Phase */}
+      {!authDone && (
+        <div className="relative">
+          <AuthPhase onComplete={handleAuthComplete} />
         </div>
+      )}
 
-        {/* Right: Terminal output */}
-        <div className="flex w-[440px] flex-col gap-3">
-          {/* Classification header */}
-          <div className="flex items-center gap-3" style={{ opacity: phase >= 1 ? 1 : 0 }}>
-            <div className="h-px flex-1" style={{ backgroundColor: "rgba(255,50,50,0.3)" }} />
-            <span className="text-[8px] font-bold tracking-[2px] animate-pulse-slow" style={{ color: "rgba(255,50,50,0.7)" }}>
-              TOP SECRET // SI-TK // NOFORN
+      {/* Main Boot Phase */}
+      {authDone && (
+        <div className="relative flex items-center gap-8">
+          {/* Left: Radar scope */}
+          <div className="relative flex flex-col items-center gap-2">
+            <RadarScope progress={progress} phase={phase} />
+            <span className="text-[8px] tracking-[3px] animate-pulse-slow" style={{ color: "#00FFD180" }}>
+              {phase < 3 ? "SCANNING" : phase < 4 ? "ACQUIRING" : "LOCKED"}
             </span>
-            <div className="h-px flex-1" style={{ backgroundColor: "rgba(255,50,50,0.3)" }} />
           </div>
 
-          {/* Terminal lines */}
-          <div className="scrollbar-hide max-h-[320px] overflow-y-auto font-mono">
-            {ALL_LINES.slice(0, visibleLines).map((line, i) => (
-              <div
-                key={i}
-                className="animate-fade-in-up text-[10px] leading-[1.7]"
-                style={{ color: line.color, opacity: line.text ? 1 : 0 }}
-              >
-                {line.text}
-                {i === visibleLines - 1 && line.text && (
-                  <span className="animate-cursor" style={{ color: line.color }}>{" "}</span>
-                )}
+          {/* Right: Terminal output */}
+          <div className="flex w-[440px] flex-col gap-3">
+            {/* Classification header */}
+            <div className="flex items-center gap-3" style={{ opacity: phase >= 1 ? 1 : 0 }}>
+              <div className="h-px flex-1" style={{ backgroundColor: "rgba(255,50,50,0.3)" }} />
+              <span className="text-[8px] font-bold tracking-[2px] animate-pulse-slow" style={{ color: "rgba(255,50,50,0.7)" }}>
+                TOP SECRET // SI-TK // NOFORN
+              </span>
+              <div className="h-px flex-1" style={{ backgroundColor: "rgba(255,50,50,0.3)" }} />
+            </div>
+
+            {/* Terminal lines */}
+            <div className="scrollbar-hide max-h-[320px] overflow-y-auto font-mono">
+              {ALL_LINES.slice(0, visibleLines).map((line, i) => (
+                <div
+                  key={i}
+                  className="animate-fade-in-up text-[10px] leading-[1.7]"
+                  style={{ color: line.color, opacity: line.text ? 1 : 0 }}
+                >
+                  {line.text}
+                  {i === visibleLines - 1 && line.text && (
+                    <span className="animate-cursor" style={{ color: line.color }}>{" "}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Status bars */}
+            <div className="flex flex-col gap-[6px] mt-1" style={{ opacity: phase >= 2 ? 1 : 0.2, transition: "opacity 0.5s" }}>
+              <StatusBar label="CPU" value={94} maxValue={100} color="#00FF41" delay={2200} />
+              <StatusBar label="MEM" value={12480} maxValue={16384} color="#00FFD1" delay={2500} />
+              <StatusBar label="GPU" value={87} maxValue={100} color="#FFA500" delay={2800} />
+              <StatusBar label="UPLINK" value={98} maxValue={100} color="#00FF41" delay={3200} />
+            </div>
+
+            {/* Progress bar */}
+            <div className="mt-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[7px] tracking-[1px]" style={{ color: "rgba(0,255,209,0.4)" }}>SYSTEM INITIALIZATION</span>
+                <span className="text-[8px] tabular-nums font-bold" style={{ color: "#00FFD1" }}>{Math.round(progress * 100)}%</span>
               </div>
-            ))}
-          </div>
-
-          {/* Status bars */}
-          <div className="flex flex-col gap-[6px] mt-1" style={{ opacity: phase >= 2 ? 1 : 0.2, transition: "opacity 0.5s" }}>
-            <StatusBar label="CPU" value={94} maxValue={100} color="#00FF41" delay={2200} />
-            <StatusBar label="MEM" value={12480} maxValue={16384} color="#00FFD1" delay={2500} />
-            <StatusBar label="GPU" value={87} maxValue={100} color="#FFA500" delay={2800} />
-            <StatusBar label="UPLINK" value={98} maxValue={100} color="#00FF41" delay={3200} />
-          </div>
-
-          {/* Progress bar */}
-          <div className="mt-1">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[7px] tracking-[1px]" style={{ color: "rgba(0,255,209,0.4)" }}>SYSTEM INITIALIZATION</span>
-              <span className="text-[8px] tabular-nums font-bold" style={{ color: "#00FFD1" }}>{Math.round(progress * 100)}%</span>
+              <div className="h-[3px] w-full overflow-hidden rounded-full" style={{ backgroundColor: "rgba(0,200,255,0.08)" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-300 ease-out"
+                  style={{
+                    width: `${progress * 100}%`,
+                    backgroundColor: "#00FFD1",
+                    boxShadow: "0 0 8px #00FFD1, 0 0 20px #00FFD140",
+                  }}
+                />
+              </div>
             </div>
-            <div className="h-[3px] w-full overflow-hidden rounded-full" style={{ backgroundColor: "rgba(0,200,255,0.08)" }}>
-              <div
-                className="h-full rounded-full transition-all duration-300 ease-out"
-                style={{
-                  width: `${progress * 100}%`,
-                  backgroundColor: "#00FFD1",
-                  boxShadow: "0 0 8px #00FFD1, 0 0 20px #00FFD140",
-                }}
-              />
-            </div>
-          </div>
 
-          {/* Bottom info strip */}
-          <div className="flex items-center justify-between mt-1" style={{ opacity: phase >= 1 ? 0.6 : 0 }}>
-            <span className="text-[6px] tracking-[1px]" style={{ color: "rgba(200,230,255,0.3)" }}>
-              OPERATOR: AUTHORIZED
-            </span>
-            <span className="text-[6px] tracking-[1px]" style={{ color: "rgba(200,230,255,0.3)" }}>
-              SESSION: {sessionCode}
-            </span>
-            <span className="text-[6px] tracking-[1px] tabular-nums" style={{ color: "rgba(200,230,255,0.3)" }}>
-              {bootTimestamp}Z
-            </span>
+            {/* Bottom info strip */}
+            <div className="flex items-center justify-between mt-1" style={{ opacity: phase >= 1 ? 0.6 : 0 }}>
+              <span className="text-[6px] tracking-[1px]" style={{ color: "rgba(200,230,255,0.3)" }}>
+                OPERATOR: AUTHORIZED
+              </span>
+              <span className="text-[6px] tracking-[1px]" style={{ color: "rgba(200,230,255,0.3)" }}>
+                SESSION: {sessionCode}
+              </span>
+              <span className="text-[6px] tracking-[1px] tabular-nums" style={{ color: "rgba(200,230,255,0.3)" }}>
+                {bootTimestamp}Z
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Corner brackets */}
       <div className="absolute top-6 left-6 w-8 h-8 border-t border-l" style={{ borderColor: "rgba(0,255,209,0.2)" }} />

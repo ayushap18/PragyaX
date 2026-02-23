@@ -3,6 +3,7 @@
 import { useModeStore } from "@/stores/modeStore";
 import { useHUDStore } from "@/stores/hudStore";
 import { useMapStore } from "@/stores/mapStore";
+import { useDataStore } from "@/stores/dataStore";
 import { MODE_ACCENTS } from "@/constants/modes";
 import IntelBrief from "@/components/panels/IntelBrief";
 import DataLayers from "@/components/panels/DataLayers";
@@ -19,10 +20,13 @@ export default function LeftPanel() {
   const entityCount = useHUDStore((s) => s.entityCount);
   const signalStrength = useHUDStore((s) => s.signalStrength);
   const intelFeed = useHUDStore((s) => s.intelFeed);
+  const flights = useDataStore((s) => s.flights);
+  const earthquakes = useDataStore((s) => s.earthquakes);
+  const satelliteTLEs = useDataStore((s) => s.satelliteTLEs);
 
   return (
     <div
-      className="fixed bottom-14 left-0 top-6 z-10 flex w-[220px] flex-col overflow-hidden"
+      className="fixed bottom-14 left-0 top-[38px] z-10 flex w-[220px] flex-col overflow-hidden"
       style={{
         backgroundColor: "var(--bg-panel)",
         borderRight: "1px solid var(--border-subtle)",
@@ -76,6 +80,16 @@ export default function LeftPanel() {
             SYSTEM STATUS
           </span>
           <div className="h-px flex-1" style={{ backgroundColor: `${accent}26` }} />
+        </div>
+
+        {/* Subsystem Health Indicators — Christmas Tree */}
+        <div className="flex items-center gap-[6px] px-3 py-[4px]">
+          <SubsystemDot label="CESIUM" healthy={true} accent={accent} />
+          <SubsystemDot label="SATCOM" healthy={signalStrength > 90} accent={accent} />
+          <SubsystemDot label="ADS-B" healthy={flights.length > 0} accent={accent} />
+          <SubsystemDot label="SIGINT" healthy={feedQuality > 95} accent={accent} />
+          <SubsystemDot label="NRO" healthy={satelliteTLEs.length > 0} accent={accent} />
+          <SubsystemDot label="SEISMIC" healthy={earthquakes.length > 0} accent={accent} />
         </div>
 
         <StatusRow label="UPLINK" value="CONNECTED" valueColor="var(--accent-green)" dot />
@@ -167,6 +181,24 @@ function FeedRow({ event }: { event: IntelEvent }) {
       </span>
       <span className="text-[6px] leading-[1.4]" style={{ color: FEED_COLORS[event.type] }}>
         {event.text}
+      </span>
+    </div>
+  );
+}
+
+function SubsystemDot({ label, healthy, accent }: { label: string; healthy: boolean; accent: string }) {
+  const color = healthy ? "var(--accent-green)" : "var(--accent-amber)";
+  return (
+    <div className="flex flex-col items-center gap-[2px]">
+      <div
+        className={`h-[6px] w-[6px] rounded-sm ${healthy ? '' : 'animate-blink-rec'}`}
+        style={{
+          backgroundColor: color,
+          boxShadow: `0 0 3px ${color}`,
+        }}
+      />
+      <span className="text-[4px] tracking-[0.5px]" style={{ color: `${accent}50` }}>
+        {label}
       </span>
     </div>
   );

@@ -99,7 +99,7 @@ export default function ChanakyaLeftPanel() {
 
   return (
     <div
-      className="fixed bottom-[110px] left-0 top-6 z-10 flex w-[240px] flex-col overflow-hidden"
+      className="fixed bottom-[110px] left-0 top-[38px] z-10 flex w-[240px] flex-col overflow-hidden"
       style={{
         backgroundColor: CHANAKYA_COLORS.panel,
         borderRight: `1px solid ${saffron}20`,
