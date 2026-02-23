@@ -33,6 +33,7 @@ import AlertToast from "@/components/ui/AlertToast";
 import ShortcutOverlay from "@/components/ui/ShortcutOverlay";
 import { useChanakyaMode } from "@/hooks/useChanakyaMode";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 const CesiumViewer = dynamic(
   () => import("@/components/map/CesiumViewer"),
@@ -58,7 +59,9 @@ export default function PragyaXShell() {
       {!booted && <BootSequence onComplete={handleBootComplete} />}
 
       {/* Globe - z-0 (full viewport) — ALWAYS rendered */}
-      <CesiumViewer />
+      <ErrorBoundary name="CesiumViewer">
+        <CesiumViewer />
+      </ErrorBoundary>
 
       {/* Edge glow + scanlines - z-2/3/4 */}
       <VisualModeFilter />
@@ -74,40 +77,44 @@ export default function PragyaXShell() {
 
           {/* Standard WORLDVIEW panels */}
           {!isChanakya && (
-            <>
+            <ErrorBoundary name="Standard Panels">
               <LeftPanel />
               <RightPanel />
               <BottomNav />
               <MiniGlobe />
-            </>
+            </ErrorBoundary>
           )}
 
           {/* Chanakya India intelligence panels */}
           {isChanakya && (
-            <>
+            <ErrorBoundary name="Chanakya Panels">
               <ChanakyaLeftPanel />
               <ChanakyaRightPanel />
               <ChanakyaBottomNav />
               <ISROMissionClock />
-            </>
+            </ErrorBoundary>
           )}
 
           {/* Headless data layers — always active */}
-          <FlightLayer />
-          <EarthquakeLayer />
-          <SatelliteLayer />
-          <WeatherLayer />
-          <CCTVLayer />
-          <TrafficLayer />
-          <GraticuleLayer />
+          <ErrorBoundary name="Data Layers">
+            <FlightLayer />
+            <EarthquakeLayer />
+            <SatelliteLayer />
+            <WeatherLayer />
+            <CCTVLayer />
+            <TrafficLayer />
+            <GraticuleLayer />
 
-          {/* India-specific layers — active when enabled */}
-          <IndiaBorderLayer />
-          <StrategicNodeLayer />
-          <ISROSatelliteLayer />
-          <AQILayer />
+            {/* India-specific layers — active when enabled */}
+            <IndiaBorderLayer />
+            <StrategicNodeLayer />
+            <ISROSatelliteLayer />
+            <AQILayer />
+          </ErrorBoundary>
 
-          <DataPollingManager />
+          <ErrorBoundary name="Data Polling">
+            <DataPollingManager />
+          </ErrorBoundary>
           <CommandModal />
           <CCTVPanel />
           <EntityDetail />
