@@ -51,9 +51,10 @@ export default function ChanakyaRightPanel() {
     const upper = t.name.toUpperCase();
     return ISRO_SATELLITE_PATTERNS.some((p) => upper.includes(p));
   });
-  const navicCount = isroSats.filter(
-    (t) => t.name.toUpperCase().includes('IRNSS') || t.name.toUpperCase().includes('NAVIC')
+  const navicRaw = isroSats.filter(
+    (t) => t.name.toUpperCase().includes('IRNSS') || t.name.toUpperCase().includes('NVS-')
   ).length;
+  const navicCount = Math.min(navicRaw, 7); // NavIC constellation = 7 operational slots
 
   // India flights for RECON op
   const indiaFlights = flights.filter(

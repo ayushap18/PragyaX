@@ -3,7 +3,9 @@ import type { SatelliteResponse, SatellitePosition } from '@/types';
 export async function fetchSatelliteTLEs(
   group: string = 'stations'
 ): Promise<SatelliteResponse> {
-  const res = await fetch(`/api/satellites?group=${group}`);
+  const res = await fetch(`/api/satellites?group=${group}`, {
+    signal: AbortSignal.timeout(45000),
+  });
   if (!res.ok) throw new Error(`Satellite fetch failed: ${res.status}`);
   return res.json();
 }

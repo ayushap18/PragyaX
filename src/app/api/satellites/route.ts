@@ -3,7 +3,7 @@ import { cache } from '@/lib/cache';
 import { rateLimit } from '@/lib/rateLimit';
 import { errorResponse, rateLimitResponse, getClientIP } from '@/lib/apiHelpers';
 
-const checkRate = rateLimit('satellites', { maxRequests: 5, windowMs: 60_000 });
+const checkRate = rateLimit('satellites', { maxRequests: 15, windowMs: 60_000 });
 
 const GROUP_URLS: Record<string, string> = {
   stations: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json',
