@@ -6,6 +6,7 @@ export const MODE_FILTERS: Record<VisualMode, string> = {
   NVG: 'hue-rotate(90deg) saturate(800%) brightness(0.8) contrast(1.4)',
   FLIR: 'grayscale(100%) brightness(1.2) contrast(1.6) invert(1)',
   DRONE: 'none',
+  GREEN: 'hue-rotate(100deg) saturate(600%) brightness(0.9) contrast(1.3)',
 };
 
 export const MODE_ACCENTS: Record<VisualMode, string> = {
@@ -14,6 +15,7 @@ export const MODE_ACCENTS: Record<VisualMode, string> = {
   NVG: '#00FF41',
   FLIR: '#CCCCCC',
   DRONE: '#00FFD1',
+  GREEN: '#39FF14',
 };
 
 export const MODE_LABELS: Record<VisualMode, string> = {
@@ -22,6 +24,7 @@ export const MODE_LABELS: Record<VisualMode, string> = {
   NVG: 'NVG',
   FLIR: 'FLIR',
   DRONE: 'Drone',
+  GREEN: 'Green',
 };
 
 export const MODE_ICONS: Record<VisualMode, string> = {
@@ -30,15 +33,17 @@ export const MODE_ICONS: Record<VisualMode, string> = {
   NVG: 'binoculars',
   FLIR: 'thermometer',
   DRONE: 'plane',
+  GREEN: 'shield',
 };
 
-export const ALL_MODES: VisualMode[] = ['NORMAL', 'CRT', 'NVG', 'FLIR', 'DRONE'];
+export const ALL_MODES: VisualMode[] = ['NORMAL', 'CRT', 'NVG', 'FLIR', 'DRONE', 'GREEN'];
 
 export const BOTTOM_MODES: { mode: VisualMode | 'ANIMATE' | 'REFS' | 'AI'; label: string; icon: string }[] = [
   { mode: 'NORMAL', label: 'Normal', icon: 'globe' },
   { mode: 'CRT', label: 'CRT', icon: 'monitor' },
   { mode: 'NVG', label: 'NVG', icon: 'binoculars' },
   { mode: 'FLIR', label: 'FLIR', icon: 'thermometer' },
+  { mode: 'GREEN', label: 'Green', icon: 'shield' },
   { mode: 'ANIMATE', label: 'Animate', icon: 'play' },
   { mode: 'REFS', label: 'Refs', icon: 'layout-grid' },
   { mode: 'DRONE', label: 'Drone', icon: 'plane' },

@@ -1,11 +1,11 @@
 /**
- * Draw a rotated aircraft triangle on a canvas and return the data URL.
+ * Draw a rotated realistic aircraft silhouette on a canvas and return the data URL.
  */
 export function createAircraftCanvas(
   headingDeg: number,
   color: string = '#00FFD1'
 ): string {
-  const size = 24;
+  const size = 32;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -16,19 +16,44 @@ export function createAircraftCanvas(
   ctx.translate(size / 2, size / 2);
   ctx.rotate((headingDeg * Math.PI) / 180);
 
-  // Draw aircraft triangle
+  // Aircraft silhouette — fuselage + swept wings + tail
   ctx.beginPath();
-  ctx.moveTo(0, -8); // nose
-  ctx.lineTo(-5, 7); // left wing
-  ctx.lineTo(0, 4); // body
-  ctx.lineTo(5, 7); // right wing
+  ctx.moveTo(0, -12);    // nose
+  ctx.lineTo(1.5, -8);
+  ctx.lineTo(1.5, -3);
+  ctx.lineTo(10, 0);     // right wing tip
+  ctx.lineTo(10, 2);
+  ctx.lineTo(1.5, 1);
+  ctx.lineTo(1.5, 6);
+  ctx.lineTo(4, 9);      // right tail
+  ctx.lineTo(4, 10);
+  ctx.lineTo(1, 8);
+  ctx.lineTo(0, 10);     // tail center
+  ctx.lineTo(-1, 8);
+  ctx.lineTo(-4, 10);    // left tail
+  ctx.lineTo(-4, 9);
+  ctx.lineTo(-1.5, 6);
+  ctx.lineTo(-1.5, 1);
+  ctx.lineTo(-10, 2);    // left wing tip
+  ctx.lineTo(-10, 0);
+  ctx.lineTo(-1.5, -3);
+  ctx.lineTo(-1.5, -8);
   ctx.closePath();
+
   ctx.fillStyle = color;
   ctx.fill();
 
-  // Glow effect
+  // Glow
   ctx.shadowColor = color;
-  ctx.shadowBlur = 4;
+  ctx.shadowBlur = 6;
+  ctx.fill();
+
+  // Cockpit highlight
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.arc(0, -9, 1, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.globalAlpha = 0.7;
   ctx.fill();
 
   ctx.restore();

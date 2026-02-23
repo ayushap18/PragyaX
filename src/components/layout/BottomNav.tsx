@@ -57,7 +57,7 @@ export default function BottomNav() {
   };
 
   const handleModeClick = (m: typeof BOTTOM_MODES[number]) => {
-    const isVisualMode = ['NORMAL', 'CRT', 'NVG', 'FLIR', 'DRONE'].includes(m.mode);
+    const isVisualMode = ['NORMAL', 'CRT', 'NVG', 'FLIR', 'DRONE', 'GREEN'].includes(m.mode);
     if (m.mode === 'AI') {
       SFX.commandOpen();
       setCommandModalOpen(true);

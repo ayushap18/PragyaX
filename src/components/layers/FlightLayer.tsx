@@ -70,8 +70,8 @@ export default function FlightLayer() {
           position,
           billboard: {
             image,
-            width: 14,
-            height: 14,
+            width: 20,
+            height: 20,
             verticalOrigin: cesium.VerticalOrigin.CENTER,
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
           },

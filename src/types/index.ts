@@ -1,4 +1,4 @@
-export type VisualMode = 'NORMAL' | 'CRT' | 'NVG' | 'FLIR' | 'DRONE';
+export type VisualMode = 'NORMAL' | 'CRT' | 'NVG' | 'FLIR' | 'DRONE' | 'GREEN';
 
 export type LayerName = 'flights' | 'earthquakes' | 'satellites' | 'traffic' | 'weather' | 'cctv';
 

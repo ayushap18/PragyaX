@@ -8,7 +8,7 @@ export default function VisualModeFilter() {
   const optics = useModeStore((s) => s.optics);
   const accent = MODE_ACCENTS[currentMode];
 
-  const showScanlines = currentMode === "CRT" || currentMode === "NVG";
+  const showScanlines = currentMode === "CRT" || currentMode === "NVG" || currentMode === "GREEN";
   const showCRTFlicker = currentMode === "CRT";
 
   // Compute optics-driven effects
