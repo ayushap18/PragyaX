@@ -74,13 +74,40 @@ export default function CesiumViewer() {
         viewer.scene.globe.enableLighting = false;
       }
 
+      // Camera constraints — keep the globe centered and smooth
+      const controller = viewer.scene.screenSpaceCameraController;
+      controller.minimumZoomDistance = 500;          // min 500m above surface
+      controller.maximumZoomDistance = 40_000_000;   // max 40,000km out
+      controller.enableTilt = true;
+      controller.enableLook = false;                 // prevent free-look that dislodges globe
+      controller.inertiaSpin = 0.9;                  // smooth spin deceleration
+      controller.inertiaTranslate = 0.9;             // smooth translate deceleration
+      controller.inertiaZoom = 0.8;                  // smooth zoom deceleration
+
+      // Clamp tilt so camera never goes below horizon (keeps globe visible)
+      viewer.scene.postRender.addEventListener(() => {
+        if (!Cesium) return;
+        const camera = viewer.camera;
+        const pitch = camera.pitch;
+        // Don't allow pitch above -0.05 radians (~3° from horizontal)
+        if (pitch > -0.05) {
+          camera.setView({
+            orientation: {
+              heading: camera.heading,
+              pitch: -0.05,
+              roll: camera.roll,
+            },
+          });
+        }
+      });
+
       // Fly to Washington DC
-      const { lat, lon, altitudeKm, pitch } = useMapStore.getState();
+      const { lat, lon, altitudeKm, pitch: initPitch } = useMapStore.getState();
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(lon, lat, altitudeKm * 1000),
         orientation: {
           heading: Cesium.Math.toRadians(0),
-          pitch: Cesium.Math.toRadians(pitch),
+          pitch: Cesium.Math.toRadians(initPitch),
           roll: 0,
         },
         duration: 0,

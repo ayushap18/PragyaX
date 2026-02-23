@@ -163,7 +163,50 @@ export default function RightPanel() {
           ALT: 193M SUN: 4.1° EL
         </span>
       </div>
+
+      <Divider />
+
+      {/* Action Buttons */}
+      <div className="flex flex-col gap-[2px] px-3 py-2">
+        <span className="text-[5px] tracking-[2px] mb-1" style={{ color: "var(--text-dim)" }}>
+          ACTIONS
+        </span>
+        <div className="grid grid-cols-2 gap-[2px]">
+          <PanelActionBtn label="FEED ID" accent={accent} onClick={() => SFX.click()} />
+          <PanelActionBtn label="COVERAGE" accent={accent} onClick={() => SFX.click()} />
+          <PanelActionBtn label="PREDICTION" accent={accent} onClick={() => SFX.click()} />
+          <PanelActionBtn label="ALIGN" accent={accent} onClick={() => SFX.click()} />
+          <PanelActionBtn label="BRIEF" accent={accent} onClick={() => SFX.click()} />
+          <PanelActionBtn label="NEXT SAT" accent={accent} onClick={() => SFX.click()} />
+        </div>
+      </div>
+
+      {/* Session info */}
+      <div className="mt-auto px-3 py-2 flex flex-col gap-[2px]" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <span className="text-[5px] tabular-nums" style={{ color: "var(--text-dim)" }}>
+          SESSION: PX-{Math.floor(Date.now() / 100000) % 10000}
+        </span>
+        <span className="text-[5px] tabular-nums" style={{ color: `${accent}40` }}>
+          CLEARANCE: TS/SCI
+        </span>
+      </div>
     </div>
+  );
+}
+
+function PanelActionBtn({ label, accent, onClick }: { label: string; accent: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center justify-center py-[4px] text-[6px] font-bold tracking-[0.5px] transition-all hover:brightness-125 cursor-pointer"
+      style={{
+        backgroundColor: "rgba(0,5,15,0.8)",
+        color: "rgba(200,230,255,0.5)",
+        border: "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 

@@ -10,6 +10,7 @@ export interface IntelEvent {
 interface HUDState {
   fps: number;
   cpu: number;
+  mem: number;
   utcTime: string;
   entityCount: number;
   signalStrength: number;
@@ -50,6 +51,7 @@ function jitter(base: number, range: number): number {
 export const useHUDStore = create<HUDState>((set, get) => ({
   fps: 60,
   cpu: 34,
+  mem: 62,
   utcTime: new Date().toISOString().slice(11, 19) + 'Z',
   entityCount: 8414,
   signalStrength: 97,
@@ -66,6 +68,7 @@ export const useHUDStore = create<HUDState>((set, get) => ({
 
     const newFps = jitter(60, 6);
     const newCpu = jitter(34, 8);
+    const newMem = Math.min(95, Math.max(45, jitter(state.mem, 6)));
     const newEntities = jitter(8414, 30);
     const newSignal = Math.min(100, Math.max(88, jitter(state.signalStrength, 4)));
     const newFeedQuality = Math.min(99.9, Math.max(93, +(state.feedQuality + (Math.random() - 0.5) * 0.6).toFixed(1)));
@@ -90,6 +93,7 @@ export const useHUDStore = create<HUDState>((set, get) => ({
     set({
       fps: newFps,
       cpu: newCpu,
+      mem: newMem,
       entityCount: newEntities,
       signalStrength: newSignal,
       feedQuality: newFeedQuality,

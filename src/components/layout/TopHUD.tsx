@@ -10,6 +10,7 @@ import { MODE_ACCENTS } from "@/constants/modes";
 export default function TopHUD() {
   const fps = useHUDStore((s) => s.fps);
   const cpu = useHUDStore((s) => s.cpu);
+  const mem = useHUDStore((s) => s.mem);
   const utcTime = useHUDStore((s) => s.utcTime);
   const signalStrength = useHUDStore((s) => s.signalStrength);
   const simulateTick = useHUDStore((s) => s.simulateTick);
@@ -76,6 +77,7 @@ export default function TopHUD() {
         <MetricChip label="SIG" value={`${signalStrength}%`} color={signalStrength > 95 ? "var(--accent-green)" : accent} />
         <MetricChip label="FPS" value={`${fps}`} color={fps >= 58 ? accent : "var(--accent-amber)"} />
         <MetricChip label="CPU" value={`${cpu}%`} color={cpu < 50 ? accent : "var(--accent-amber)"} />
+        <MetricChip label="MEM" value={`${mem}%`} color={mem < 80 ? accent : "var(--accent-amber)"} />
         <MetricChip label="ENT" value={entityCount.toLocaleString()} color={accent} />
         <div className="mx-1 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
         <span className="animate-counter-tick text-[9px] font-bold tabular-nums" style={{ color: accent }}>
