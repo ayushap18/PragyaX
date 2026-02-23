@@ -82,6 +82,8 @@ export default function EarthquakeLayer() {
       }
     });
     entityIdsRef.current = currentIds;
+
+    viewer.scene.requestRender();
   }, [viewer, cesium, earthquakes, enabled]);
 
   return null;

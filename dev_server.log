@@ -1,0 +1,36 @@
+
+> pragyax@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 1160ms
+○ Compiling / ...
+ GET / 200 in 13.8s (compile: 13.5s, render: 315ms)
+ GET / 200 in 74ms (compile: 11ms, render: 63ms)
+ GET /api/status/ticker 200 in 1165ms (compile: 1149ms, render: 16ms)
+ POST /api/intel/breadcrumbs 503 in 1271ms (compile: 1258ms, render: 13ms)
+ GET /api/flights?lamin=38.90576668929017&lamax=38.95110953450445&lomin=-77.08511238736952&lomax=-76.9878876132569 200 in 1801ms (compile: 1067ms, render: 734ms)
+ GET /api/flights?lamin=38.90576668929017&lamax=38.95110953450445&lomin=-77.08511238736952&lomax=-76.9878876132569 200 in 8ms (compile: 3ms, render: 5ms)
+ GET /api/satellites?group=stations 200 in 2.8s (compile: 1322ms, render: 1447ms)
+ GET /api/satellites?group=stations 200 in 26ms (compile: 15ms, render: 11ms)
+ GET /api/satellites?group=indian 200 in 2.8s (compile: 1335ms, render: 1487ms)
+ GET /api/satellites?group=indian 200 in 9ms (compile: 3ms, render: 6ms)
+ GET /api/flights?lamin=38.90576668929017&lamax=38.95110953450445&lomin=-77.08511238736952&lomax=-76.9878876132569 200 in 25ms (compile: 6ms, render: 19ms)
+ GET / 200 in 78ms (compile: 6ms, render: 73ms)
+ GET /api/satellites?group=indian 200 in 39ms (compile: 32ms, render: 7ms)
+ GET /api/satellites?group=stations 200 in 9ms (compile: 5ms, render: 4ms)
+ POST /api/intel/breadcrumbs 503 in 19ms (compile: 10ms, render: 9ms)
+ GET /api/status/ticker 200 in 29ms (compile: 21ms, render: 8ms)
+ GET /api/satellites?group=indian 200 in 37ms (compile: 29ms, render: 8ms)
+ GET /api/satellites?group=stations 200 in 7ms (compile: 2ms, render: 5ms)
+ GET /api/flights?lamin=38.90576668929017&lamax=38.95110953450445&lomin=-77.08511238736952&lomax=-76.9878876132569 200 in 427ms (compile: 9ms, render: 419ms)
+ GET /api/flights?lamin=38.90576668929017&lamax=38.95110953450445&lomin=-77.08511238736952&lomax=-76.9878876132569 200 in 11ms (compile: 7ms, render: 3ms)

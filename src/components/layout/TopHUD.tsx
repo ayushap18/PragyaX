@@ -16,6 +16,7 @@ export default function TopHUD() {
   const utcTime = useHUDStore((s) => s.utcTime);
   const signalStrength = useHUDStore((s) => s.signalStrength);
   const simulateTick = useHUDStore((s) => s.simulateTick);
+  const toggleSystemStatus = useHUDStore((s) => s.toggleSystemStatus);
   const currentMode = useModeStore((s) => s.current);
   const activeWindow = useModeStore((s) => s.activeWindow);
   const accent = MODE_ACCENTS[currentMode];
@@ -128,12 +129,21 @@ export default function TopHUD() {
 
       {/* Right: Live metrics */}
       <div className="flex items-center gap-3">
-        <MetricChip label="SIG" value={`${signalStrength}%`} color={signalStrength > 95 ? "var(--accent-green)" : accent} />
-        <MetricChip label="FPS" value={`${fps}`} color={fps >= 58 ? accent : "var(--accent-amber)"} />
-        <MetricChip label="CPU" value={`${cpu}%`} color={cpu < 50 ? accent : "var(--accent-amber)"} />
-        <MetricChip label="MEM" value={`${mem}%`} color={mem < 80 ? accent : "var(--accent-amber)"} />
-        <MetricChip label="ENT" value={entityCount.toLocaleString()} color={accent} />
-        <div className="mx-1 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
+        <button
+          onClick={toggleSystemStatus}
+          className="px-2 py-[2px] text-[7px] font-bold tracking-[1px] border hover:bg-white/10 transition-colors cursor-pointer"
+          style={{ color: accent, borderColor: `${accent}40` }}
+        >
+          SYS
+        </button>
+        <div className="hidden md:flex items-center gap-3">
+          <MetricChip label="SIG" value={`${signalStrength}%`} color={signalStrength > 95 ? "var(--accent-green)" : accent} />
+          <MetricChip label="FPS" value={`${fps}`} color={fps >= 58 ? accent : "var(--accent-amber)"} />
+          <MetricChip label="CPU" value={`${cpu}%`} color={cpu < 50 ? accent : "var(--accent-amber)"} />
+          <MetricChip label="MEM" value={`${mem}%`} color={mem < 80 ? accent : "var(--accent-amber)"} />
+          <MetricChip label="ENT" value={entityCount.toLocaleString()} color={accent} />
+          <div className="mx-1 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
+        </div>
         <span className="animate-counter-tick text-[9px] font-bold tabular-nums" style={{ color: activeWindow === 'CHANAKYA' ? chanakyaAccent : accent }}>
           {utcTime}
         </span>
