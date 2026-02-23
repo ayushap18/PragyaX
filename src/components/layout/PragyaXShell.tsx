@@ -14,6 +14,7 @@ import EarthquakeLayer from "@/components/layers/EarthquakeLayer";
 import SatelliteLayer from "@/components/layers/SatelliteLayer";
 import WeatherLayer from "@/components/layers/WeatherLayer";
 import CCTVLayer from "@/components/layers/CCTVLayer";
+import TrafficLayer from "@/components/layers/TrafficLayer";
 import GraticuleLayer from "@/components/layers/GraticuleLayer";
 import DataPollingManager from "@/components/data/DataPollingManager";
 import CommandModal from "@/components/panels/CommandModal";
@@ -60,6 +61,7 @@ export default function PragyaXShell() {
           <SatelliteLayer />
           <WeatherLayer />
           <CCTVLayer />
+          <TrafficLayer />
           <GraticuleLayer />
           <DataPollingManager />
           <CommandModal />
