@@ -11,9 +11,11 @@ export async function POST(request: Request) {
   const limit = checkRate(ip);
   if (!limit.allowed) return rateLimitResponse(limit.retryAfterMs!);
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return errorResponse('NO_API_KEY', 'Anthropic API key not configured', 503);
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!geminiKey && !anthropicKey) {
+    return errorResponse('NO_API_KEY', 'Neither Gemini nor Anthropic API key configured', 503);
   }
 
   try {
@@ -47,29 +49,61 @@ Time: ${new Date().toISOString()}
 
 Generate the surveillance analysis.`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
-        temperature: 0.5,
-        system: CCTV_ANALYSIS_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userPrompt }],
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
+    let responseText = '';
 
-    if (!res.ok) {
-      return errorResponse('ANTHROPIC_ERROR', `Claude API error: ${res.status}`, 502);
+    if (geminiKey) {
+      // Use Gemini API
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: CCTV_ANALYSIS_SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: userPrompt }] }],
+            generationConfig: {
+              temperature: 0.5,
+              maxOutputTokens: 300,
+            },
+          }),
+          signal: AbortSignal.timeout(15000),
+        }
+      );
+
+      if (!res.ok) {
+        const errBody = await res.text();
+        return errorResponse('GEMINI_ERROR', `Gemini API error: ${res.status} ${errBody}`, 502);
+      }
+
+      const data = await res.json();
+      responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } else if (anthropicKey) {
+      // Fallback to Anthropic
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 200,
+          temperature: 0.5,
+          system: CCTV_ANALYSIS_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userPrompt }],
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!res.ok) {
+        return errorResponse('ANTHROPIC_ERROR', `Claude API error: ${res.status}`, 502);
+      }
+
+      const data = await res.json();
+      responseText = data.content?.[0]?.text || '';
     }
 
-    const data = await res.json();
-    let responseText = data.content?.[0]?.text || '';
     responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
     try {

@@ -64,6 +64,13 @@ export default function CesiumViewer() {
 
       // Try to load Google 3D Tiles, fallback to default imagery
       try {
+        const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (googleApiKey) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (Cesium as any).GoogleMaps = (Cesium as any).GoogleMaps || {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (Cesium as any).GoogleMaps.defaultApiKey = googleApiKey;
+        }
         const tileset = await Cesium.createGooglePhotorealistic3DTileset();
         viewer.scene.primitives.add(tileset);
         // Hide the default globe when we have 3D tiles
