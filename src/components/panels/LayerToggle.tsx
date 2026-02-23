@@ -3,6 +3,7 @@
 import { useLayerStore } from "@/stores/layerStore";
 import { useModeStore } from "@/stores/modeStore";
 import { MODE_ACCENTS } from "@/constants/modes";
+import { SFX } from "@/utils/audioEngine";
 import type { LayerName } from "@/types";
 
 interface LayerToggleProps {
@@ -30,7 +31,7 @@ export default function LayerToggle({ id, label, icon }: LayerToggleProps) {
 
   return (
     <button
-      onClick={() => toggleLayer(id)}
+      onClick={() => { enabled ? SFX.layerOff() : SFX.layerOn(); toggleLayer(id); }}
       className="flex w-full items-center justify-between px-3 transition-colors"
       style={{
         height: 32,

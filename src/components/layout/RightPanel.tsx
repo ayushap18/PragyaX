@@ -4,6 +4,8 @@ import { useModeStore } from "@/stores/modeStore";
 import { useHUDStore } from "@/stores/hudStore";
 import { MODE_ACCENTS } from "@/constants/modes";
 import SliderControl from "@/components/ui/SliderControl";
+import { SFX } from "@/utils/audioEngine";
+import type { OpticsState } from "@/types";
 
 export default function RightPanel() {
   const currentMode = useModeStore((s) => s.current);
@@ -68,8 +70,14 @@ export default function RightPanel() {
       {/* FOG dropdown */}
       <div className="flex flex-col gap-[3px] px-3 py-2">
         <span className="text-[6px] tracking-[1px]" style={{ color: "var(--text-dim)" }}>FOG</span>
-        <div
-          className="flex h-[22px] items-center justify-between rounded-sm px-2 transition-colors"
+        <button
+          onClick={() => {
+            SFX.click();
+            const cycle: OpticsState["fog"][] = ["CLEAR", "STANDARD", "TACTICAL"];
+            const idx = cycle.indexOf(optics.fog);
+            setOptic("fog", cycle[(idx + 1) % 3]);
+          }}
+          className="flex h-[22px] items-center justify-between rounded-sm px-2 transition-colors cursor-pointer"
           style={{
             border: `1px solid ${accent}60`,
             backgroundColor: `${accent}08`,
@@ -79,14 +87,14 @@ export default function RightPanel() {
             {optics.fog === "TACTICAL" ? "Tactical" : optics.fog === "STANDARD" ? "Standard" : "Clear"}
           </span>
           <span className="text-[8px]" style={{ color: accent }}>▾</span>
-        </div>
+        </button>
       </div>
 
       {/* TAPEFITZ toggle */}
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-[7px]" style={{ color: "var(--text-primary)" }}>TAPEFITZ</span>
         <button
-          onClick={() => setOptic("tapefitz", !optics.tapefitz)}
+          onClick={() => { SFX.toggle(); setOptic("tapefitz", !optics.tapefitz); }}
           className="rounded-full px-2 py-[2px] text-[6px] font-bold transition-all"
           style={{
             backgroundColor: optics.tapefitz ? "rgba(0,255,65,0.15)" : "rgba(255,255,255,0.05)",

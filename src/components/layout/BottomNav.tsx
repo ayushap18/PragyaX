@@ -1,12 +1,15 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import { useModeStore } from "@/stores/modeStore";
 import { useAIStore } from "@/stores/aiStore";
+import { useCesiumStore } from "@/stores/cesiumStore";
 import { MODE_ACCENTS } from "@/constants/modes";
 import { BOTTOM_MODES } from "@/constants/modes";
 import { CITIES } from "@/constants/cities";
 import ModeButton from "@/components/ui/ModeButton";
+import { SFX } from "@/utils/audioEngine";
 import type { VisualMode } from "@/types";
 
 export default function BottomNav() {
@@ -18,19 +21,56 @@ export default function BottomNav() {
   const setCommandModalOpen = useAIStore((s) => s.setCommandModalOpen);
   const aiBreadcrumbs = useAIStore((s) => s.breadcrumbs);
   const accent = MODE_ACCENTS[currentMode];
+  const [animateActive, setAnimateActive] = useState(false);
+  const [refsActive, setRefsActive] = useState(false);
+  const animateRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const activeCity = CITIES.find((c) => c.name === currentCity) || CITIES[0];
   const breadcrumbs = aiBreadcrumbs.length > 0 ? aiBreadcrumbs : activeCity.landmarks;
 
+  // ANIMATE mode: auto-rotate the globe
+  useEffect(() => {
+    if (animateActive) {
+      animateRef.current = setInterval(() => {
+        const { viewer, cesium } = useCesiumStore.getState();
+        if (!viewer || !cesium || viewer.isDestroyed()) return;
+        viewer.scene.camera.rotate(cesium.Cartesian3.UNIT_Z, 0.002);
+      }, 30);
+    } else if (animateRef.current) {
+      clearInterval(animateRef.current);
+      animateRef.current = null;
+    }
+    return () => {
+      if (animateRef.current) clearInterval(animateRef.current);
+    };
+  }, [animateActive]);
+
   const handleCityClick = (city: typeof CITIES[number]) => {
+    SFX.flyTo();
     setCity(city.name);
     flyTo(city.lat, city.lon, 5);
   };
 
-  const handleLandmarkClick = (landmark: string) => {
-    // Just visual feedback — the landmark coordinates would need a geocoder in production
-    // For now we just fly to the city center
+  const handleLandmarkClick = () => {
+    SFX.click();
     flyTo(activeCity.lat, activeCity.lon, 2);
+  };
+
+  const handleModeClick = (m: typeof BOTTOM_MODES[number]) => {
+    const isVisualMode = ['NORMAL', 'CRT', 'NVG', 'FLIR', 'DRONE'].includes(m.mode);
+    if (m.mode === 'AI') {
+      SFX.commandOpen();
+      setCommandModalOpen(true);
+    } else if (m.mode === 'ANIMATE') {
+      SFX.toggle();
+      setAnimateActive((prev) => !prev);
+    } else if (m.mode === 'REFS') {
+      SFX.toggle();
+      setRefsActive((prev) => !prev);
+    } else if (isVisualMode) {
+      SFX.modeSwitch();
+      setMode(m.mode as VisualMode);
+    }
   };
 
   return (
@@ -52,7 +92,7 @@ export default function BottomNav() {
         {breadcrumbs.map((landmark, i) => (
           <button
             key={landmark}
-            onClick={() => handleLandmarkClick(landmark)}
+            onClick={() => handleLandmarkClick()}
             className="rounded-sm px-2 py-[2px] text-[7px] transition-colors"
             style={{
               backgroundColor: i === 0 ? accent : "transparent",
@@ -95,7 +135,10 @@ export default function BottomNav() {
       {/* Row 3: Mode selector */}
       <div className="flex flex-1 items-stretch">
         {BOTTOM_MODES.map((m, i) => {
-          const isVisualMode = ['NORMAL', 'CRT', 'NVG', 'FLIR', 'DRONE'].includes(m.mode);
+          const isActive =
+            m.mode === 'ANIMATE' ? animateActive :
+            m.mode === 'REFS' ? refsActive :
+            currentMode === m.mode;
           return (
             <div key={m.mode} className="flex items-stretch">
               {i > 0 && (
@@ -105,18 +148,65 @@ export default function BottomNav() {
                 mode={m.mode}
                 label={m.label}
                 icon={m.icon}
-                isActive={currentMode === m.mode}
-                onClick={() => {
-                  if (m.mode === 'AI') {
-                    setCommandModalOpen(true);
-                  } else if (isVisualMode) {
-                    setMode(m.mode as VisualMode);
-                  }
-                }}
+                isActive={isActive}
+                onClick={() => handleModeClick(m)}
               />
             </div>
           );
         })}
+      </div>
+
+      {/* REFS grid overlay */}
+      {refsActive && <GridOverlay accent={accent} />}
+    </div>
+  );
+}
+
+function GridOverlay({ accent }: { accent: string }) {
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 z-[6]"
+      style={{
+        backgroundImage: `
+          linear-gradient(${accent}10 1px, transparent 1px),
+          linear-gradient(90deg, ${accent}10 1px, transparent 1px)
+        `,
+        backgroundSize: "80px 80px",
+      }}
+    >
+      {/* Coordinate labels at grid intersections */}
+      {[0, 1, 2, 3].map((row) =>
+        [0, 1, 2, 3, 4].map((col) => (
+          <span
+            key={`${row}-${col}`}
+            className="absolute text-[6px] tabular-nums"
+            style={{
+              top: `${row * 25 + 12}%`,
+              left: `${col * 25 + 1}%`,
+              color: `${accent}40`,
+            }}
+          >
+            {String.fromCharCode(65 + col)}{row + 1}
+          </span>
+        ))
+      )}
+      {/* Crosshair marks at intersections */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        style={{
+          width: 20,
+          height: 20,
+          borderTop: `1px solid ${accent}30`,
+          borderBottom: `1px solid ${accent}30`,
+          borderLeft: `1px solid ${accent}30`,
+          borderRight: `1px solid ${accent}30`,
+        }}
+      />
+      {/* Distance scale bar */}
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-1">
+        <div className="h-px w-20" style={{ backgroundColor: `${accent}60` }} />
+        <span className="text-[6px]" style={{ color: `${accent}60` }}>100KM</span>
+        <div className="h-px w-20" style={{ backgroundColor: `${accent}60` }} />
       </div>
     </div>
   );
