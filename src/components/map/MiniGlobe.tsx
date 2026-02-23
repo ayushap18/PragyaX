@@ -156,15 +156,15 @@ export default function MiniGlobe() {
 
     // Labels
     ctx.fillStyle = `${accent}60`;
-    ctx.font = "6px monospace";
+    ctx.font = "5px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(`${cLat.toFixed(1)}°N ${Math.abs(cLon).toFixed(1)}°${cLon >= 0 ? 'E' : 'W'}`, cx, H - 3);
+    ctx.fillText(`${cLat.toFixed(1)}° ${Math.abs(cLon).toFixed(1)}°`, cx, H - 6);
 
     // Flight count
     ctx.fillStyle = "#00FFD190";
-    ctx.font = "bold 6px monospace";
+    ctx.font = "bold 5px monospace";
     ctx.textAlign = "left";
-    ctx.fillText(`${flights.length} AC`, 3, 8);
+    ctx.fillText(`${flights.length} AC`, 6, 10);
 
     animRef.current = requestAnimationFrame(draw);
   }, [accent]);
@@ -176,27 +176,22 @@ export default function MiniGlobe() {
 
   return (
     <div
-      className="fixed bottom-[62px] right-3 z-20"
+      className="pointer-events-none fixed bottom-[62px] right-3 z-20"
       style={{
         border: `1px solid ${accent}30`,
         backgroundColor: "rgba(0,5,15,0.85)",
-        borderRadius: "4px",
+        borderRadius: "50%",
         boxShadow: `0 0 12px ${accent}10`,
+        overflow: "hidden",
+        width: 100,
+        height: 100,
       }}
     >
-      <div className="flex items-center justify-between px-2 py-[2px]" style={{ borderBottom: `1px solid ${accent}15` }}>
-        <span className="text-[5px] font-bold tracking-[1px]" style={{ color: `${accent}80` }}>
-          GLOBAL OVERVIEW
-        </span>
-        <span className="text-[5px] tabular-nums" style={{ color: "var(--text-dim)" }}>
-          LIVE
-        </span>
-      </div>
       <canvas
         ref={canvasRef}
-        width={160}
-        height={160}
-        style={{ width: 160, height: 160, display: "block" }}
+        width={100}
+        height={100}
+        style={{ width: 100, height: 100, display: "block" }}
       />
     </div>
   );
