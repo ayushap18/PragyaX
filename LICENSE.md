@@ -2,7 +2,7 @@
 
 **Version 1.0 -- Effective Date: February 23, 2026**
 
-**Copyright (c) 2026 Ayush Pandey. All Rights Reserved.**
+**Copyright (c) 2026 Ayush Sharma. All Rights Reserved.**
 
 ---
 
