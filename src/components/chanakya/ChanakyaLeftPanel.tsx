@@ -103,6 +103,7 @@ export default function ChanakyaLeftPanel() {
       style={{
         backgroundColor: CHANAKYA_COLORS.panel,
         borderRight: `1px solid ${saffron}20`,
+        overscrollBehavior: 'contain',
       }}
     >
       {/* Header */}

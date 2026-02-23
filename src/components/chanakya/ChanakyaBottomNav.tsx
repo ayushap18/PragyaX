@@ -95,6 +95,7 @@ export default function ChanakyaBottomNav() {
       style={{
         backgroundColor: CHANAKYA_COLORS.panel,
         borderTop: `1px solid ${saffron}20`,
+        overscrollBehavior: 'contain',
       }}
     >
       {/* Tricolor bar */}

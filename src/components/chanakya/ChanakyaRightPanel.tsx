@@ -72,6 +72,7 @@ export default function ChanakyaRightPanel() {
       style={{
         backgroundColor: CHANAKYA_COLORS.panel,
         borderLeft: `1px solid ${saffron}20`,
+        overscrollBehavior: 'contain',
       }}
     >
       {/* Mode Header */}

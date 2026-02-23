@@ -46,7 +46,7 @@ export default function PragyaXShell() {
   }, []);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-black">
+    <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Boot sequence overlay */}
       {!booted && <BootSequence onComplete={handleBootComplete} />}
 
