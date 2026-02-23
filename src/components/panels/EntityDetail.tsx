@@ -1,0 +1,187 @@
+"use client";
+
+import { useState } from "react";
+import { useAIStore } from "@/stores/aiStore";
+import { useModeStore } from "@/stores/modeStore";
+import { MODE_ACCENTS } from "@/constants/modes";
+import { generateSatelliteProfile } from "@/services/claudeService";
+
+export default function EntityDetail() {
+  const selectedEntity = useAIStore((s) => s.selectedEntity);
+  const clearSelectedEntity = useAIStore((s) => s.clearSelectedEntity);
+  const currentMode = useModeStore((s) => s.current);
+  const accent = MODE_ACCENTS[currentMode];
+
+  const [satProfile, setSatProfile] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  if (!selectedEntity) return null;
+
+  const { type, data } = selectedEntity;
+
+  const handleSatProfile = async () => {
+    if (loadingProfile || type !== "satellite") return;
+    setLoadingProfile(true);
+    try {
+      const result = await generateSatelliteProfile({
+        name: data.name as string,
+        noradId: data.noradId as number,
+        orbitType: data.orbitType as string,
+        inclination: data.inclination as number,
+        intlDesignator: data.intlDesignator as string,
+      });
+      setSatProfile(result.profile);
+    } catch {
+      setSatProfile("PROFILE GENERATION FAILED");
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed left-[200px] top-[60px] z-30 w-[280px] flex flex-col"
+      style={{
+        border: `1px solid ${accent}30`,
+        backgroundColor: "rgba(0,5,15,0.95)",
+        boxShadow: `0 0 20px ${accent}10`,
+      }}
+    >
+      {/* Header */}
+      <div
+        className="flex items-center justify-between px-3 py-2"
+        style={{
+          borderBottom: `1px solid ${accent}15`,
+          backgroundColor: `${accent}05`,
+        }}
+      >
+        <span
+          className="text-[7px] font-bold tracking-[1px]"
+          style={{ color: accent }}
+        >
+          {type.toUpperCase()} DETAIL
+        </span>
+        <button
+          onClick={() => {
+            clearSelectedEntity();
+            setSatProfile(null);
+          }}
+          className="text-[8px] font-bold transition-colors hover:opacity-80"
+          style={{ color: "var(--text-dim)" }}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="px-3 py-2 flex flex-col gap-2">
+        {type === "flight" && (
+          <>
+            <DetailRow label="CALLSIGN" value={data.callsign as string || "N/A"} accent={accent} />
+            <DetailRow label="ICAO24" value={data.icao24 as string} accent={accent} />
+            <DetailRow label="ORIGIN" value={data.originCountry as string} accent={accent} />
+            <DetailRow label="ALTITUDE" value={`${data.altitudeFt as number} FT`} accent={accent} />
+            <DetailRow label="SPEED" value={`${data.velocityKts as number} KTS`} accent={accent} />
+            <DetailRow label="HEADING" value={`${(data.heading as number)?.toFixed(0)}°`} accent={accent} />
+            <DetailRow label="VERT RATE" value={`${data.verticalRateMs as number} M/S`} accent={accent} />
+            <DetailRow label="SQUAWK" value={data.squawk as string || "----"} accent={accent} />
+            <DetailRow label="GROUND" value={(data.onGround as boolean) ? "YES" : "NO"} accent={accent} />
+            <DetailRow label="POSITION" value={`${(data.lat as number)?.toFixed(4)}°N ${(data.lon as number)?.toFixed(4)}°E`} accent={accent} />
+          </>
+        )}
+
+        {type === "earthquake" && (
+          <>
+            <DetailRow label="MAGNITUDE" value={`M${data.magnitude as number}`} accent={accent} highlight />
+            <DetailRow label="LOCATION" value={data.place as string} accent={accent} />
+            <DetailRow label="DEPTH" value={`${data.depthKm as number} KM`} accent={accent} />
+            <DetailRow label="TIME" value={(data.timeUtc as string)?.slice(0, 19)} accent={accent} />
+            <DetailRow label="TSUNAMI" value={(data.tsunamiRisk as boolean) ? "RISK" : "NONE"} accent={accent} highlight={(data.tsunamiRisk as boolean)} />
+            <DetailRow label="ALERT" value={(data.alertLevel as string) || "NONE"} accent={accent} />
+            <DetailRow label="FELT BY" value={data.felt ? `${data.felt} REPORTS` : "N/A"} accent={accent} />
+            <DetailRow label="POSITION" value={`${(data.lat as number)?.toFixed(4)}°N ${(data.lon as number)?.toFixed(4)}°E`} accent={accent} />
+          </>
+        )}
+
+        {type === "satellite" && (
+          <>
+            <DetailRow label="NAME" value={data.name as string} accent={accent} />
+            <DetailRow label="NORAD ID" value={String(data.noradId)} accent={accent} />
+            <DetailRow label="INTL DES" value={data.intlDesignator as string} accent={accent} />
+            <DetailRow label="ORBIT" value={data.orbitType as string} accent={accent} />
+            <DetailRow label="INCL" value={`${(data.inclination as number)?.toFixed(1)}°`} accent={accent} />
+            <DetailRow label="ECCEN" value={String((data.eccentricity as number)?.toFixed(6))} accent={accent} />
+            <DetailRow label="MEAN MOT" value={`${(data.meanMotion as number)?.toFixed(4)} rev/day`} accent={accent} />
+
+            {!satProfile && !loadingProfile && (
+              <button
+                onClick={handleSatProfile}
+                className="mt-1 rounded-sm px-2 py-1 text-[7px] font-bold tracking-[1px] transition-colors"
+                style={{
+                  border: `1px solid ${accent}40`,
+                  color: accent,
+                  backgroundColor: `${accent}10`,
+                }}
+              >
+                GENERATE INTEL PROFILE
+              </button>
+            )}
+
+            {loadingProfile && (
+              <span
+                className="text-[7px] font-bold tracking-[1px] animate-pulse mt-1"
+                style={{ color: accent }}
+              >
+                ATLAS-SIGINT ANALYZING...
+              </span>
+            )}
+
+            {satProfile && (
+              <div
+                className="mt-1 px-2 py-1"
+                style={{
+                  borderLeft: `2px solid ${accent}40`,
+                  backgroundColor: `${accent}05`,
+                }}
+              >
+                <span className="text-[6px] font-bold tracking-[1px] block mb-1" style={{ color: accent }}>
+                  INTEL PROFILE
+                </span>
+                <p className="text-[7px] whitespace-pre-line leading-[1.5]" style={{ color: "rgba(200,230,255,0.7)" }}>
+                  {satProfile}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  accent,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  accent: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[6px] tracking-[1px]" style={{ color: "var(--text-dim)" }}>
+        {label}
+      </span>
+      <span
+        className="text-[8px] font-mono tabular-nums"
+        style={{
+          color: highlight ? "#FF3333" : `${accent}90`,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
