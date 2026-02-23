@@ -5,6 +5,7 @@ import { useAIStore } from "@/stores/aiStore";
 import { useModeStore } from "@/stores/modeStore";
 import { MODE_ACCENTS } from "@/constants/modes";
 import { analyzeFrame } from "@/services/geminiService";
+import { getStreetViewUrl } from "@/constants/cameras";
 import { SFX } from "@/utils/audioEngine";
 import type { VisionAnalysisResponse } from "@/types";
 
@@ -143,50 +144,73 @@ export default function CCTVPanel() {
         </div>
       </div>
 
-      {/* Feed view with scanlines */}
+      {/* Feed view with Street View image + scanlines */}
       <div
-        className="relative mx-3 mt-2 flex h-[90px] items-center justify-center overflow-hidden"
+        className="relative mx-3 mt-2 flex h-[120px] items-center justify-center overflow-hidden"
         style={{
           backgroundColor: "rgba(0,0,0,0.7)",
           border: "1px solid rgba(255,0,0,0.2)",
         }}
       >
-        {/* Static noise pattern */}
+        {/* Street View image */}
+        {(() => {
+          const svUrl = getStreetViewUrl(selectedCamera, 320, 180);
+          if (svUrl) {
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={svUrl}
+                alt={`CCTV feed ${selectedCamera.label}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ filter: "brightness(0.7) contrast(1.2) saturate(0.8)" }}
+              />
+            );
+          }
+          return null;
+        })()}
+        {/* Scanline overlay on top of image */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 z-[1]"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`,
-            backgroundSize: "100px 100px",
-            opacity: 0.5,
+            background: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px)`,
           }}
         />
-        {/* Scanlines */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)`,
-          }}
-        />
-        <div className="relative flex flex-col items-center gap-1">
-          <span className="text-[8px] font-bold" style={{ color: "#FF3333" }}>
-            LIVE FEED
+        {/* Corner brackets */}
+        <div className="absolute top-0 left-0 w-3 h-3 border-l border-t z-[2]" style={{ borderColor: "#FF333360" }} />
+        <div className="absolute top-0 right-0 w-3 h-3 border-r border-t z-[2]" style={{ borderColor: "#FF333360" }} />
+        <div className="absolute bottom-0 left-0 w-3 h-3 border-l border-b z-[2]" style={{ borderColor: "#FF333360" }} />
+        <div className="absolute bottom-0 right-0 w-3 h-3 border-r border-b z-[2]" style={{ borderColor: "#FF333360" }} />
+        {/* REC indicator */}
+        <div className="absolute top-1 left-1 flex items-center gap-1 z-[2]">
+          <div className="h-[4px] w-[4px] rounded-full animate-pulse" style={{ backgroundColor: "#FF3333" }} />
+          <span className="text-[5px] font-bold tracking-[1px]" style={{ color: "#FF3333" }}>
+            REC
           </span>
-          <span className="text-[6px]" style={{ color: "var(--text-dim)" }}>
-            {isAnalyzing ? "ANALYZING FRAME..." : "FRAME CAPTURED"}
-          </span>
-          <div className="flex items-center gap-1 mt-1">
-            <div className="h-[3px] w-[3px] rounded-full animate-pulse" style={{ backgroundColor: "#FF3333" }} />
-            <span className="text-[5px] tracking-[1px]" style={{ color: "#FF3333" }}>
-              REC
+        </div>
+        {/* Status text if no image */}
+        {!getStreetViewUrl(selectedCamera) && (
+          <div className="relative z-[2] flex flex-col items-center gap-1">
+            <span className="text-[8px] font-bold" style={{ color: "#FF3333" }}>
+              LIVE FEED
+            </span>
+            <span className="text-[6px]" style={{ color: "var(--text-dim)" }}>
+              {isAnalyzing ? "ANALYZING FRAME..." : "FRAME CAPTURED"}
             </span>
           </div>
-        </div>
+        )}
         {/* Timestamp overlay */}
         <span
-          className="absolute bottom-1 right-1 text-[5px] tabular-nums"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          className="absolute bottom-1 right-1 text-[5px] tabular-nums z-[2]"
+          style={{ color: "rgba(255,255,255,0.6)" }}
         >
           {new Date().toISOString().slice(11, 19)}Z
+        </span>
+        {/* Feed label */}
+        <span
+          className="absolute bottom-1 left-1 text-[5px] font-bold tracking-[0.5px] z-[2]"
+          style={{ color: "rgba(255,255,255,0.5)" }}
+        >
+          CAM-{selectedCamera.id.toUpperCase()}
         </span>
       </div>
 

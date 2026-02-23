@@ -1,5 +1,21 @@
 import type { CameraPosition } from '@/types';
 
+// Direction to heading degrees mapping
+const DIR_HEADING: Record<string, number> = {
+  N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315,
+};
+
+/**
+ * Build a Google Street View Static API URL for a camera position.
+ * Requires NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local
+ */
+export function getStreetViewUrl(cam: CameraPosition, width = 320, height = 180): string {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return '';
+  const heading = DIR_HEADING[cam.direction] ?? 0;
+  return `https://maps.googleapis.com/maps/api/streetview?size=${width}x${height}&location=${cam.lat},${cam.lon}&heading=${heading}&fov=90&pitch=-5&key=${apiKey}`;
+}
+
 export const CAMERAS: CameraPosition[] = [
   // Washington DC
   { id: 'dc-capitol', label: 'US Capitol', city: 'Washington DC', lat: 38.8899, lon: -77.0091, feedUrl: '', direction: 'N' },
