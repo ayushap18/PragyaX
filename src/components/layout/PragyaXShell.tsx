@@ -12,6 +12,7 @@ import VisualModeFilter from "@/components/map/VisualModeFilter";
 import FlightLayer from "@/components/layers/FlightLayer";
 import EarthquakeLayer from "@/components/layers/EarthquakeLayer";
 import SatelliteLayer from "@/components/layers/SatelliteLayer";
+import SatelliteGroundTrack from "@/components/layers/SatelliteGroundTrack";
 import WeatherLayer from "@/components/layers/WeatherLayer";
 import CCTVLayer from "@/components/layers/CCTVLayer";
 import TrafficLayer from "@/components/layers/TrafficLayer";
@@ -20,6 +21,7 @@ import IndiaBorderLayer from "@/components/layers/IndiaBorderLayer";
 import StrategicNodeLayer from "@/components/layers/StrategicNodeLayer";
 import ISROSatelliteLayer from "@/components/layers/ISROSatelliteLayer";
 import AQILayer from "@/components/layers/AQILayer";
+import DayNightTerminator from "@/components/layers/DayNightTerminator";
 import DataPollingManager from "@/components/data/DataPollingManager";
 import CommandModal from "@/components/panels/CommandModal";
 import CCTVPanel from "@/components/panels/CCTVPanel";
@@ -31,12 +33,15 @@ import ChanakyaBottomNav from "@/components/chanakya/ChanakyaBottomNav";
 import ISROMissionClock from "@/components/chanakya/ISROMissionClock";
 import AlertToast from "@/components/ui/AlertToast";
 import ShortcutOverlay from "@/components/ui/ShortcutOverlay";
+import ModeTransition from "@/components/ui/ModeTransition";
+import ReticleOverlay from "@/components/ui/ReticleOverlay";
 import TimelineScrubber from "@/components/ui/TimelineScrubber";
 import SpectrumAnalyzer from "@/components/panels/SpectrumAnalyzer";
 import AnomalyPanel from "@/components/panels/AnomalyPanel";
 import GeofencePanel from "@/components/panels/GeofencePanel";
 import MissionPlanner from "@/components/panels/MissionPlanner";
 import SurveillanceGrid from "@/components/panels/SurveillanceGrid";
+import SecureMessageConsole from "@/components/panels/SecureMessageConsole";
 import { useChanakyaMode } from "@/hooks/useChanakyaMode";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useGeofenceEngine } from "@/hooks/useGeofenceEngine";
@@ -57,6 +62,7 @@ export default function PragyaXShell() {
   const [showGeofences, setShowGeofences] = useState(false);
   const [showMissions, setShowMissions] = useState(false);
   const [showSurveillanceGrid, setShowSurveillanceGrid] = useState(false);
+  const [showComms, setShowComms] = useState(false);
   // Manages auto-fly, layer toggling on mode switch
   const { isChanakya } = useChanakyaMode();
 
@@ -82,6 +88,7 @@ export default function PragyaXShell() {
     setShowGeofences(panel === 'geofences');
     setShowMissions(panel === 'missions');
     setShowSurveillanceGrid(panel === 'grid');
+    setShowComms(panel === 'comms');
   }, []);
 
   return (
@@ -98,6 +105,12 @@ export default function PragyaXShell() {
       {/* Scope vignette + crosshair + range rings - z-5 */}
       <ScopeOverlay />
 
+      {/* Mode transition cinematic overlay - z-60 */}
+      <ModeTransition />
+
+      {/* Heads-up reticle overlay - z-6 */}
+      <ReticleOverlay />
+
       {/* Panels - z-10/20 */}
       {booted && (
         <>
@@ -113,6 +126,7 @@ export default function PragyaXShell() {
                 onOpenGeofences={() => openPanel('geofences')}
                 onOpenMissions={() => openPanel('missions')}
                 onOpenSurveillanceGrid={() => openPanel('grid')}
+                onOpenComms={() => openPanel('comms')}
                 onToggleGPS={toggleGPS}
                 gpsActive={gps.active}
                 gpsAccuracy={gps.accuracy}
@@ -141,6 +155,7 @@ export default function PragyaXShell() {
           <FlightLayer />
           <EarthquakeLayer />
           <SatelliteLayer />
+          <SatelliteGroundTrack />
           <WeatherLayer />
           <CCTVLayer />
           <TrafficLayer />
@@ -151,6 +166,7 @@ export default function PragyaXShell() {
           <StrategicNodeLayer />
           <ISROSatelliteLayer />
           <AQILayer />
+          <DayNightTerminator />
 
           <DataPollingManager />
           <CommandModal />
@@ -163,6 +179,7 @@ export default function PragyaXShell() {
           {showGeofences && <GeofencePanel onClose={() => setShowGeofences(false)} />}
           {showMissions && <MissionPlanner onClose={() => setShowMissions(false)} />}
           {showSurveillanceGrid && <SurveillanceGrid onClose={() => setShowSurveillanceGrid(false)} />}
+          {showComms && <SecureMessageConsole onClose={() => setShowComms(false)} />}
 
           {/* Shortcut overlay */}
           {showShortcuts && <ShortcutOverlay onClose={() => setShowShortcuts(false)} />}

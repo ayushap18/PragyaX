@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useCesiumStore } from '@/stores/cesiumStore';
 import { useAIStore } from '@/stores/aiStore';
 import { useDataStore } from '@/stores/dataStore';
+import { SFX } from '@/utils/audioEngine';
 
 export function useEntityClick() {
   const viewer = useCesiumStore((s) => s.viewer);
@@ -26,9 +27,24 @@ export function useEntityClick() {
         const flights = useDataStore.getState().flights;
         const aircraft = flights.find((f) => f.icao24 === icao24);
         if (aircraft) {
+          SFX.click();
           setSelectedEntity({
             type: 'flight',
             data: aircraft as unknown as Record<string, unknown>,
+          });
+          // Fly camera to the clicked aircraft
+          viewer.camera.flyTo({
+            destination: cesium.Cartesian3.fromDegrees(
+              aircraft.lon,
+              aircraft.lat,
+              aircraft.altitudeM + 50000
+            ),
+            orientation: {
+              heading: cesium.Math.toRadians(aircraft.heading),
+              pitch: cesium.Math.toRadians(-45),
+              roll: 0,
+            },
+            duration: 2,
           });
         }
       } else if (entityId.startsWith('quake-')) {
@@ -36,6 +52,7 @@ export function useEntityClick() {
         const earthquakes = useDataStore.getState().earthquakes;
         const quake = earthquakes.find((e) => e.id === quakeId);
         if (quake) {
+          SFX.click();
           setSelectedEntity({
             type: 'earthquake',
             data: quake as unknown as Record<string, unknown>,
@@ -46,6 +63,7 @@ export function useEntityClick() {
         const sats = useDataStore.getState().satelliteTLEs;
         const sat = sats.find((s) => s.noradId === noradId);
         if (sat) {
+          SFX.click();
           setSelectedEntity({
             type: 'satellite',
             data: sat as unknown as Record<string, unknown>,

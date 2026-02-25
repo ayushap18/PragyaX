@@ -21,7 +21,24 @@ interface CameraTile {
   trafficFlow: string;
   threatLevel: number;
   lastAnalysis: number;
+  youtubeId?: string;
 }
+
+// Public YouTube live stream IDs for major locations
+const YOUTUBE_LIVE_STREAMS: Record<string, string> = {
+  'ny-timessq': 'eJ7ZkQ5TC08',
+  'tk-shibuya': 'DjdUEyjx8GM',
+  'db-burj': '0iyJ6E0KIIc',
+  'ny-wtc': 'qbMhfgXGPOA',
+  'ld-bigben': 'LgbGirRAEbo',
+  'pa-eiffel': 'cPlDBrrLdHo',
+  'sf-gg': 'nSNMFib-wjU',
+  'dc-capitol': 'MpXzKPBTmRE',
+  'au-6th': 'K_YVTXsBn5Q',
+  'ny-central': 'E4x-p2wMSec',
+  'tk-skytree': 'cKLiNMWR80c',
+  'ld-tower': 'Pg95WTdgxPY',
+};
 
 export default function SurveillanceGrid({ onClose }: { onClose: () => void }) {
   const mode = useModeStore((s) => s.current);
@@ -48,6 +65,7 @@ export default function SurveillanceGrid({ onClose }: { onClose: () => void }) {
       trafficFlow: ['FREE', 'MODERATE', 'HEAVY'][Math.floor(Math.random() * 3)],
       threatLevel: 0,
       lastAnalysis: Date.now(),
+      youtubeId: YOUTUBE_LIVE_STREAMS[cam.id],
     })));
     setRotateOffset(0);
   }, [currentCity]);
@@ -187,55 +205,91 @@ function CameraTileView({ cam, accent }: { cam: CameraTile; accent: string }) {
       className="relative rounded overflow-hidden flex flex-col"
       style={{ border: `1px solid ${accent}20`, backgroundColor: 'rgba(0,0,0,0.7)' }}
     >
-      {/* Camera feed area (simulated) */}
+      {/* Camera feed area */}
       <div className="flex-1 relative min-h-0 flex items-center justify-center"
         style={{ backgroundColor: 'rgba(0,10,20,0.9)' }}
       >
-        {/* Scan line effect */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px)`,
-          }}
-        />
+        {/* YouTube live embed or scan line placeholder */}
+        {cam.youtubeId ? (
+          <iframe
+            src={`https://www.youtube.com/embed/${cam.youtubeId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+            className="absolute inset-0 w-full h-full"
+            style={{ border: 'none' }}
+            allow="autoplay; encrypted-media"
+            loading="lazy"
+            title={cam.label}
+          />
+        ) : (
+          /* Scan line effect for non-YouTube cameras */
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px)`,
+            }}
+          />
+        )}
 
-        {/* Camera label */}
-        <div className="absolute top-2 left-2 flex items-center gap-2">
-          <div className="h-[5px] w-[5px] rounded-full" style={{
-            backgroundColor: cam.status === 'live' ? '#FF4444' : '#666',
-            boxShadow: cam.status === 'live' ? '0 0 4px #FF4444' : 'none',
-            animation: cam.status === 'live' ? 'pulse 2s infinite' : 'none',
-          }} />
-          <span className="text-[8px] tracking-[1px] font-bold" style={{ color: '#FFF' }}>
-            {cam.id.toUpperCase()}
-          </span>
+        {/* Overlay HUD elements — always on top */}
+        <div className="absolute inset-0 pointer-events-none z-10">
+          {/* Camera label */}
+          <div className="absolute top-2 left-2 flex items-center gap-2">
+            <div className="h-[5px] w-[5px] rounded-full" style={{
+              backgroundColor: cam.status === 'live' ? '#FF4444' : '#666',
+              boxShadow: cam.status === 'live' ? '0 0 4px #FF4444' : 'none',
+              animation: cam.status === 'live' ? 'pulse 2s infinite' : 'none',
+            }} />
+            <span className="text-[8px] tracking-[1px] font-bold" style={{
+              color: '#FFF',
+              textShadow: '0 0 4px rgba(0,0,0,0.9)',
+            }}>
+              {cam.id.toUpperCase()}
+            </span>
+            {cam.youtubeId && (
+              <span className="text-[6px] px-1 rounded-sm" style={{
+                backgroundColor: '#FF0000',
+                color: '#FFF',
+                fontWeight: 700,
+              }}>LIVE</span>
+            )}
+          </div>
+
+          {/* Timestamp overlay */}
+          <div className="absolute top-2 right-2">
+            <span className="text-[7px] font-mono tabular-nums" style={{
+              color: 'rgba(255,255,255,0.7)',
+              textShadow: '0 0 4px rgba(0,0,0,0.9)',
+            }}>
+              {new Date(cam.lastAnalysis).toISOString().slice(11, 19)}
+            </span>
+          </div>
+
+          {/* Camera label bottom */}
+          <div className="absolute bottom-2 left-2">
+            <span className="text-[9px] font-bold" style={{
+              color: 'rgba(255,255,255,0.9)',
+              textShadow: '0 0 4px rgba(0,0,0,0.9)',
+            }}>
+              {cam.label}
+            </span>
+            <span className="text-[7px] ml-2" style={{
+              color: 'rgba(255,255,255,0.6)',
+              textShadow: '0 0 4px rgba(0,0,0,0.9)',
+            }}>
+              {cam.city} • {cam.direction}
+            </span>
+          </div>
         </div>
 
-        {/* Timestamp overlay */}
-        <div className="absolute top-2 right-2">
-          <span className="text-[7px] font-mono tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {new Date(cam.lastAnalysis).toISOString().slice(11, 19)}
-          </span>
-        </div>
-
-        {/* Center crosshair */}
-        <svg width="40" height="40" viewBox="0 0 40 40" className="opacity-20">
-          <line x1="20" y1="5" x2="20" y2="15" stroke={accent} strokeWidth="0.5" />
-          <line x1="20" y1="25" x2="20" y2="35" stroke={accent} strokeWidth="0.5" />
-          <line x1="5" y1="20" x2="15" y2="20" stroke={accent} strokeWidth="0.5" />
-          <line x1="25" y1="20" x2="35" y2="20" stroke={accent} strokeWidth="0.5" />
-          <circle cx="20" cy="20" r="8" stroke={accent} strokeWidth="0.5" fill="none" />
-        </svg>
-
-        {/* Camera label bottom */}
-        <div className="absolute bottom-2 left-2">
-          <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            {cam.label}
-          </span>
-          <span className="text-[7px] ml-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            {cam.city} • {cam.direction}
-          </span>
-        </div>
+        {/* Center crosshair — only show when no YouTube feed */}
+        {!cam.youtubeId && (
+          <svg width="40" height="40" viewBox="0 0 40 40" className="opacity-20">
+            <line x1="20" y1="5" x2="20" y2="15" stroke={accent} strokeWidth="0.5" />
+            <line x1="20" y1="25" x2="20" y2="35" stroke={accent} strokeWidth="0.5" />
+            <line x1="5" y1="20" x2="15" y2="20" stroke={accent} strokeWidth="0.5" />
+            <line x1="25" y1="20" x2="35" y2="20" stroke={accent} strokeWidth="0.5" />
+            <circle cx="20" cy="20" r="8" stroke={accent} strokeWidth="0.5" fill="none" />
+          </svg>
+        )}
       </div>
 
       {/* Stats bar */}

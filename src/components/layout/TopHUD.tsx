@@ -8,6 +8,7 @@ import { useAIStore } from "@/stores/aiStore";
 import { useConnectionStore, useAnomalyStore, useVesselStore } from "@/stores/exclusiveStores";
 import { MODE_ACCENTS } from "@/constants/modes";
 import { SFX } from "@/utils/audioEngine";
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 import type { ActiveWindow } from "@/stores/modeStore";
 
 export default function TopHUD() {
@@ -79,9 +80,8 @@ export default function TopHUD() {
 
       {/* Main HUD Bar */}
       <div
-        className="fixed left-0 right-0 top-[14px] z-20 flex h-6 items-center justify-between px-3"
+        className="fixed left-0 right-0 top-[14px] z-20 flex h-6 items-center justify-between px-3 panel-tier-2"
         style={{
-          backgroundColor: "var(--bg-panel)",
           borderBottom: `1px solid ${activeWindow === 'CHANAKYA' ? chanakyaAccent + '30' : 'var(--border-subtle)'}`,
         }}
       >
@@ -150,13 +150,13 @@ export default function TopHUD() {
 
       {/* Right: Live metrics */}
       <div className="flex items-center gap-3">
-        <MetricChip label="SIG" value={`${signalStrength}%`} color={signalStrength > 95 ? "var(--accent-green)" : accent} />
-        <MetricChip label="FPS" value={`${fps}`} color={fps >= 58 ? accent : "var(--accent-amber)"} />
-        <MetricChip label="CPU" value={`${cpu}%`} color={cpu < 50 ? accent : "var(--accent-amber)"} />
-        <MetricChip label="MEM" value={`${mem}%`} color={mem < 80 ? accent : "var(--accent-amber)"} />
-        <MetricChip label="ENT" value={entityCount.toLocaleString()} color={accent} />
-        <MetricChip label="LAT" value={`${latency}ms`} color={latency < 20 ? "var(--accent-green)" : "var(--accent-amber)"} />
-        <MetricChip label="FEED" value={`${feedQuality}%`} color={feedQuality > 97 ? "var(--accent-green)" : "var(--accent-amber)"} />
+        <AnimatedMetricChip label="SIG" rawValue={signalStrength} suffix="%" color={signalStrength > 95 ? "var(--accent-green)" : accent} />
+        <AnimatedMetricChip label="FPS" rawValue={fps} color={fps >= 58 ? accent : "var(--accent-amber)"} />
+        <AnimatedMetricChip label="CPU" rawValue={cpu} suffix="%" color={cpu < 50 ? accent : "var(--accent-amber)"} />
+        <AnimatedMetricChip label="MEM" rawValue={mem} suffix="%" color={mem < 80 ? accent : "var(--accent-amber)"} />
+        <AnimatedMetricChip label="ENT" rawValue={entityCount} color={accent} />
+        <AnimatedMetricChip label="LAT" rawValue={latency} suffix="ms" color={latency < 20 ? "var(--accent-green)" : "var(--accent-amber)"} />
+        <AnimatedMetricChip label="FEED" rawValue={feedQuality} suffix="%" color={feedQuality > 97 ? "var(--accent-green)" : "var(--accent-amber)"} />
         <MetricChip label="NET" value="SECURE" color="var(--accent-green)" />
         <MetricChip
           label="WS"
@@ -164,9 +164,9 @@ export default function TopHUD() {
           color={connectionStatus === 'connected' ? "var(--accent-green)" : "var(--accent-amber)"}
         />
         {anomalyCount > 0 && (
-          <MetricChip label="ANOM" value={`${anomalyCount}`} color="#FF4444" />
+          <AnimatedMetricChip label="ANOM" rawValue={anomalyCount} color="#FF4444" />
         )}
-        <MetricChip label="VES" value={`${vessels.length}`} color={accent} />
+        <AnimatedMetricChip label="VES" rawValue={vessels.length} color={accent} />
         <div className="mx-1 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
         <span className="animate-counter-tick text-[9px] font-bold tabular-nums" style={{ color: activeWindow === 'CHANAKYA' ? chanakyaAccent : accent }}>
           {utcTime}
@@ -185,6 +185,24 @@ function MetricChip({ label, value, color }: { label: string; value: string; col
       </span>
       <span className="text-[8px] font-bold tabular-nums" style={{ color }}>
         {value}
+      </span>
+    </div>
+  );
+}
+
+function AnimatedMetricChip({ label, rawValue, suffix, color }: { label: string; rawValue: number; suffix?: string; color: string }) {
+  const { value, flashing } = useAnimatedNumber(rawValue);
+  const displayValue = rawValue >= 1000 ? Math.round(value).toLocaleString() : Math.round(value);
+  return (
+    <div className="flex items-center gap-[4px]">
+      <span className="text-[6px] tracking-wider" style={{ color: "var(--text-dim)" }}>
+        {label}
+      </span>
+      <span
+        className={`text-[8px] font-bold tabular-nums ${flashing ? "animate-number-flash" : ""}`}
+        style={{ color }}
+      >
+        {displayValue}{suffix || ""}
       </span>
     </div>
   );

@@ -460,3 +460,283 @@
     transparent 8px
   ) 3;
 }
+
+/* ═══════════════════════════════════════════
+   MODE TRANSITION CINEMATICS (Phase 4.1)
+   ═══════════════════════════════════════════ */
+
+/* Static burst — CRT / NORMAL */
+@keyframes mode-static-burst {
+  0% { opacity: 0.8; background-position: 0 0; }
+  20% { opacity: 1; }
+  40% { opacity: 0.6; background-position: 50% 50%; }
+  60% { opacity: 0.9; background-position: 100% 0; }
+  80% { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+.mode-transition-static {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+  animation: mode-static-burst 600ms ease-out forwards;
+}
+
+/* NVG green flash + intensifier */
+@keyframes mode-nvg-flash {
+  0% { opacity: 0; }
+  10% { opacity: 1; background-color: rgba(0, 255, 65, 0.6); }
+  30% { opacity: 0.8; background-color: rgba(0, 255, 65, 0.3); }
+  50% { opacity: 0.5; background-color: rgba(0, 255, 65, 0.1); }
+  100% { opacity: 0; }
+}
+.mode-transition-nvg {
+  background-color: rgba(0, 255, 65, 0.6);
+  animation: mode-nvg-flash 600ms ease-out forwards;
+}
+
+/* FLIR thermal gradient wipe from center */
+@keyframes mode-thermal-wipe {
+  0% {
+    opacity: 0.9;
+    clip-path: circle(0% at 50% 50%);
+  }
+  50% {
+    opacity: 0.7;
+    clip-path: circle(80% at 50% 50%);
+  }
+  100% {
+    opacity: 0;
+    clip-path: circle(150% at 50% 50%);
+  }
+}
+.mode-transition-thermal {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 200, 0, 0.3) 25%,
+    rgba(255, 100, 0, 0.3) 50%,
+    rgba(180, 0, 255, 0.2) 75%,
+    rgba(0, 0, 100, 0.3) 100%
+  );
+  animation: mode-thermal-wipe 600ms ease-out forwards;
+}
+
+/* DRONE camera shake + stabilization */
+@keyframes mode-drone-shake {
+  0% { transform: translate(0, 0) rotate(0); opacity: 0.6; }
+  10% { transform: translate(-3px, 2px) rotate(-0.5deg); opacity: 0.8; }
+  20% { transform: translate(4px, -2px) rotate(0.5deg); opacity: 0.7; }
+  30% { transform: translate(-2px, 3px) rotate(-0.3deg); opacity: 0.9; }
+  40% { transform: translate(3px, -1px) rotate(0.3deg); opacity: 0.6; }
+  50% { transform: translate(-1px, 2px) rotate(-0.2deg); opacity: 0.5; }
+  60% { transform: translate(2px, -1px) rotate(0.1deg); opacity: 0.4; }
+  70% { transform: translate(-1px, 1px) rotate(0deg); opacity: 0.3; }
+  80% { transform: translate(0, 0) rotate(0); opacity: 0.2; }
+  100% { transform: translate(0, 0) rotate(0); opacity: 0; }
+}
+.mode-transition-drone {
+  background: linear-gradient(to bottom, rgba(0, 200, 255, 0.1) 0%, rgba(0, 200, 255, 0.05) 50%, rgba(0, 200, 255, 0.1) 100%);
+  border-top: 2px solid rgba(0, 200, 255, 0.3);
+  border-bottom: 2px solid rgba(0, 200, 255, 0.3);
+  animation: mode-drone-shake 600ms ease-out forwards;
+}
+
+/* GREEN matrix rain effect */
+@keyframes mode-matrix-rain {
+  0% {
+    opacity: 0.9;
+    background-position: 0 -100%;
+  }
+  50% {
+    opacity: 0.7;
+    background-position: 0 50%;
+  }
+  100% {
+    opacity: 0;
+    background-position: 0 200%;
+  }
+}
+.mode-transition-matrix {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    rgba(0, 255, 65, 0.15) 2px,
+    transparent 4px,
+    transparent 8px
+  );
+  background-size: 100% 400%;
+  animation: mode-matrix-rain 600ms ease-out forwards;
+}
+
+/* CHANAKYA saffron burst */
+@keyframes mode-saffron-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  40% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+.mode-transition-saffron {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 153, 51, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    rgba(19, 136, 8, 0.3) 60%,
+    transparent 80%
+  );
+  animation: mode-saffron-burst 600ms ease-out forwards;
+}
+
+/* Mode label text animation */
+@keyframes mode-label-appear {
+  0% { opacity: 0; letter-spacing: 12px; }
+  30% { opacity: 1; letter-spacing: 8px; }
+  70% { opacity: 1; letter-spacing: 6px; }
+  100% { opacity: 0; letter-spacing: 6px; }
+}
+.mode-label-text {
+  animation: mode-label-appear 600ms ease-out forwards;
+}
+
+/* Mode label line expand */
+@keyframes mode-label-line-expand {
+  0% { width: 0; opacity: 0; }
+  30% { width: 60px; opacity: 1; }
+  70% { width: 80px; opacity: 0.8; }
+  100% { width: 100px; opacity: 0; }
+}
+.mode-label-line {
+  animation: mode-label-line-expand 600ms ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════
+   GLASSMORPHIC PANEL SYSTEM (Phase 2.2)
+   ═══════════════════════════════════════════ */
+
+/* Tier 1: Primary panels (sidebars, main panels) */
+.panel-tier-1 {
+  background: rgba(0, 8, 20, 0.85) !important;
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-color: rgba(0, 200, 255, 0.08) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 200, 255, 0.04) inset,
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(0, 200, 255, 0.03);
+}
+
+/* Tier 2: Secondary panels (sub-panels, dropdowns) */
+.panel-tier-2 {
+  background: rgba(0, 12, 30, 0.65) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(0, 200, 255, 0.05) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Tier 3: Tertiary/floating elements */
+.panel-tier-3 {
+  background: rgba(0, 16, 40, 0.40) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Animated gradient top border for panels */
+@keyframes panel-border-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.panel-gradient-border {
+  /* position inherited from element — do not override fixed/absolute positioning */
+}
+.panel-gradient-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 200, 255, 0.3) 25%,
+    rgba(0, 255, 209, 0.5) 50%,
+    rgba(0, 200, 255, 0.3) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: panel-border-shimmer 4s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════
+   CUSTOM CURSOR SYSTEM (Phase 9.1)
+   ═══════════════════════════════════════════ */
+
+/* Crosshair cursor for globe interaction */
+.cursor-crosshair-custom {
+  cursor: crosshair;
+}
+
+/* Targeting cursor for entity hover */
+.cursor-targeting {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='8' fill='none' stroke='%2300FFD1' stroke-width='1' stroke-dasharray='3 3'/%3E%3Cline x1='12' y1='2' x2='12' y2='6' stroke='%2300FFD1' stroke-width='1'/%3E%3Cline x1='12' y1='18' x2='12' y2='22' stroke='%2300FFD1' stroke-width='1'/%3E%3Cline x1='2' y1='12' x2='6' y2='12' stroke='%2300FFD1' stroke-width='1'/%3E%3Cline x1='18' y1='12' x2='22' y2='12' stroke='%2300FFD1' stroke-width='1'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%2300FFD1' opacity='0.6'/%3E%3C/svg%3E") 12 12, crosshair;
+}
+
+/* Compass cursor for panning */
+.cursor-compass {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpolygon points='10,1 12,8 10,6 8,8' fill='%2300FFD1' opacity='0.8'/%3E%3Cpolygon points='10,19 8,12 10,14 12,12' fill='%2300FFD1' opacity='0.8'/%3E%3Cpolygon points='1,10 8,8 6,10 8,12' fill='%2300FFD1' opacity='0.8'/%3E%3Cpolygon points='19,10 12,12 14,10 12,8' fill='%2300FFD1' opacity='0.8'/%3E%3C/svg%3E") 10 10, move;
+}
+
+/* Radar loading cursor */
+@keyframes cursor-radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.cursor-loading-radar {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='none' stroke='%2300FFD1' stroke-width='1' opacity='0.4'/%3E%3Cpath d='M10,10 L10,2' stroke='%2300FFD1' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%2300FFD1'/%3E%3C/svg%3E") 10 10, wait;
+}
+
+/* ═══════════════════════════════════════════
+   HEADS-UP RETICLE SYSTEM (Phase 2.3)
+   ═══════════════════════════════════════════ */
+
+/* Reticle breathing animation */
+@keyframes reticle-breathe {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.02); }
+}
+.reticle-breathe {
+  animation: reticle-breathe 4s ease-in-out infinite;
+}
+
+/* Reticle rotation for outer ring */
+@keyframes reticle-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.reticle-rotate {
+  animation: reticle-rotate 60s linear infinite;
+}
+
+/* Number animation flash on change */
+@keyframes number-flash {
+  0% { color: #FFFFFF; text-shadow: 0 0 8px currentColor; }
+  100% { color: inherit; text-shadow: none; }
+}
+.animate-number-flash {
+  animation: number-flash 300ms ease-out;
+}

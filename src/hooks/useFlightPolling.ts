@@ -41,14 +41,24 @@ function generateMockFlights(centerLat: number, centerLon: number, count = 60): 
 }
 
 function driftFlights(flights: Aircraft[]): Aircraft[] {
-  return flights.map((f) => ({
-    ...f,
-    lat: f.lat + Math.cos(f.heading * Math.PI / 180) * 0.002 + (Math.random() - 0.5) * 0.001,
-    lon: f.lon + Math.sin(f.heading * Math.PI / 180) * 0.002 + (Math.random() - 0.5) * 0.001,
-    altitudeFt: Math.max(1000, f.altitudeFt + (Math.random() - 0.5) * 200),
-    altitudeM: Math.max(300, f.altitudeM + (Math.random() - 0.5) * 60),
-    heading: (f.heading + (Math.random() - 0.5) * 3 + 360) % 360,
-  }));
+  return flights.map((f) => {
+    // Convert heading to radians for lat/lon drift
+    const hdgRad = f.heading * Math.PI / 180;
+    // Speed-proportional drift: faster planes cover more ground between polls
+    const speedFactor = Math.max(0.3, f.velocityMs / 250);
+    const driftLat = Math.cos(hdgRad) * 0.002 * speedFactor;
+    const driftLon = Math.sin(hdgRad) * 0.002 * speedFactor;
+    // Very gentle heading drift — no random jitter
+    const headingDelta = (Math.random() - 0.5) * 0.5;
+    return {
+      ...f,
+      lat: f.lat + driftLat,
+      lon: f.lon + driftLon,
+      altitudeFt: Math.max(1000, f.altitudeFt + (Math.random() - 0.5) * 40),
+      altitudeM: Math.max(300, f.altitudeM + (Math.random() - 0.5) * 12),
+      heading: (f.heading + headingDelta + 360) % 360,
+    };
+  });
 }
 
 export function useFlightPolling() {
@@ -56,6 +66,7 @@ export function useFlightPolling() {
   const setFlights = useDataStore((s) => s.setFlights);
   const setCount = useLayerStore((s) => s.setCount);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const driftRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mockFlightsRef = useRef<Aircraft[] | null>(null);
 
   useEffect(() => {
@@ -63,6 +74,10 @@ export function useFlightPolling() {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
+      }
+      if (driftRef.current) {
+        clearInterval(driftRef.current);
+        driftRef.current = null;
       }
       return;
     }
@@ -101,24 +116,34 @@ export function useFlightPolling() {
         // API failed, fall through to mock data
       }
 
-      // Generate or drift mock flights
+      // Generate mock flights on first poll
       const { lat, lon } = useMapStore.getState();
       if (!mockFlightsRef.current) {
         mockFlightsRef.current = generateMockFlights(lat, lon);
-      } else {
-        mockFlightsRef.current = driftFlights(mockFlightsRef.current);
+        setFlights(mockFlightsRef.current);
+        setCount('flights', mockFlightsRef.current.length);
       }
-      setFlights(mockFlightsRef.current);
-      setCount('flights', mockFlightsRef.current.length);
     }
 
     poll();
     intervalRef.current = setInterval(poll, 10_000);
 
+    // Smooth micro-drift every 2s for mock flights — makes them look like they're moving
+    driftRef.current = setInterval(() => {
+      if (mockFlightsRef.current) {
+        mockFlightsRef.current = driftFlights(mockFlightsRef.current);
+        setFlights(mockFlightsRef.current);
+      }
+    }, 2000);
+
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
+      }
+      if (driftRef.current) {
+        clearInterval(driftRef.current);
+        driftRef.current = null;
       }
     };
   }, [enabled, setFlights, setCount]);

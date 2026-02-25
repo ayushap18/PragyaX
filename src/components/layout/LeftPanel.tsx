@@ -9,7 +9,7 @@ import { MODE_ACCENTS } from "@/constants/modes";
 import IntelBrief from "@/components/panels/IntelBrief";
 import DataLayers from "@/components/panels/DataLayers";
 import type { IntelEvent } from "@/stores/hudStore";
-import { Radio, AlertTriangle, Shield, Map, LayoutGrid, Activity, Anchor, ShieldCheck, Crosshair } from "lucide-react";
+import { Radio, AlertTriangle, Shield, Map, LayoutGrid, Activity, Anchor, ShieldCheck, Crosshair, MessageSquare } from "lucide-react";
 
 interface LeftPanelProps {
   onOpenSpectrum?: () => void;
@@ -17,6 +17,7 @@ interface LeftPanelProps {
   onOpenGeofences?: () => void;
   onOpenMissions?: () => void;
   onOpenSurveillanceGrid?: () => void;
+  onOpenComms?: () => void;
   onToggleGPS?: () => void;
   gpsActive?: boolean;
   gpsAccuracy?: number | null;
@@ -28,6 +29,7 @@ export default function LeftPanel({
   onOpenGeofences,
   onOpenMissions,
   onOpenSurveillanceGrid,
+  onOpenComms,
   onToggleGPS,
   gpsActive,
   gpsAccuracy,
@@ -51,9 +53,8 @@ export default function LeftPanel({
 
   return (
     <div
-      className="fixed bottom-14 left-0 top-[38px] z-10 flex w-[220px] flex-col overflow-y-auto overflow-x-hidden scrollbar-thin"
+      className="fixed bottom-14 left-0 top-[38px] z-10 flex w-[220px] flex-col overflow-y-auto overflow-x-hidden scrollbar-thin panel-tier-1 panel-gradient-border"
       style={{
-        backgroundColor: "var(--bg-panel)",
         borderRight: "1px solid var(--border-subtle)",
       }}
     >
@@ -112,6 +113,7 @@ export default function LeftPanel({
           <OpButton label={`GEOFENCE${geofenceCount > 0 ? ` (${geofenceCount})` : ''}`} icon={<Shield size={8} />} onClick={onOpenGeofences} accent={accent} />
           <OpButton label="MISSION" icon={<Map size={8} />} onClick={onOpenMissions} accent={accent} />
           <OpButton label="GRID" icon={<LayoutGrid size={8} />} onClick={onOpenSurveillanceGrid} accent={accent} />
+          <OpButton label="COMMS" icon={<MessageSquare size={8} />} onClick={onOpenComms} accent={accent} />
           <OpButton label={gpsActive ? `GPS${gpsAccuracy ? ` ±${Math.round(gpsAccuracy)}m` : ''}` : 'GPS'} icon={<Crosshair size={8} />} onClick={onToggleGPS} accent={accent} active={gpsActive} />
         </div>
       </div>

@@ -1,23 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAIStore } from "@/stores/aiStore";
+import { useDataStore } from "@/stores/dataStore";
 import { useModeStore } from "@/stores/modeStore";
 import { MODE_ACCENTS } from "@/constants/modes";
 import { generateSatelliteProfile } from "@/services/claudeService";
+import { SFX } from "@/utils/audioEngine";
 
 export default function EntityDetail() {
   const selectedEntity = useAIStore((s) => s.selectedEntity);
+  const setSelectedEntity = useAIStore((s) => s.setSelectedEntity);
   const clearSelectedEntity = useAIStore((s) => s.clearSelectedEntity);
+  const flights = useDataStore((s) => s.flights);
   const currentMode = useModeStore((s) => s.current);
   const accent = MODE_ACCENTS[currentMode];
 
   const [satProfile, setSatProfile] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
+  // Live-update flight data when tracking
+  useEffect(() => {
+    if (!selectedEntity || selectedEntity.type !== 'flight') return;
+    const icao = selectedEntity.data.icao24 as string;
+    const live = flights.find((f) => f.icao24 === icao);
+    if (live) {
+      const isTracking = !!selectedEntity.data._tracking;
+      setSelectedEntity({
+        type: 'flight',
+        data: { ...(live as unknown as Record<string, unknown>), _tracking: isTracking },
+      });
+    }
+  // Only re-run when flights array changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flights]);
+
   if (!selectedEntity) return null;
 
   const { type, data } = selectedEntity;
+  const isTracking = type === 'flight' && !!data._tracking;
+
+  const handleTrackToggle = () => {
+    SFX.click();
+    setSelectedEntity({
+      type: 'flight',
+      data: { ...data, _tracking: !isTracking },
+    });
+  };
 
   const handleSatProfile = async () => {
     if (loadingProfile || type !== "satellite") return;
@@ -42,9 +71,9 @@ export default function EntityDetail() {
     <div
       className="fixed left-[200px] top-[60px] z-30 w-[280px] flex flex-col"
       style={{
-        border: `1px solid ${accent}30`,
+        border: `1px solid ${isTracking ? '#FFC800' : accent}30`,
         backgroundColor: "rgba(0,5,15,0.95)",
-        boxShadow: `0 0 20px ${accent}10`,
+        boxShadow: isTracking ? '0 0 20px rgba(255,200,0,0.15)' : `0 0 20px ${accent}10`,
       }}
     >
       {/* Header */}
@@ -52,15 +81,20 @@ export default function EntityDetail() {
         className="flex items-center justify-between px-3 py-2"
         style={{
           borderBottom: `1px solid ${accent}15`,
-          backgroundColor: `${accent}05`,
+          backgroundColor: isTracking ? 'rgba(255,200,0,0.05)' : `${accent}05`,
         }}
       >
-        <span
-          className="text-[7px] font-bold tracking-[1px]"
-          style={{ color: accent }}
-        >
-          {type.toUpperCase()} DETAIL
-        </span>
+        <div className="flex items-center gap-2">
+          {isTracking && (
+            <div className="h-[5px] w-[5px] rounded-full animate-pulse" style={{ backgroundColor: '#FFC800' }} />
+          )}
+          <span
+            className="text-[7px] font-bold tracking-[1px]"
+            style={{ color: isTracking ? '#FFC800' : accent }}
+          >
+            {isTracking ? 'TRACKING' : type.toUpperCase() + ' DETAIL'}
+          </span>
+        </div>
         <button
           onClick={() => {
             clearSelectedEntity();
@@ -86,6 +120,19 @@ export default function EntityDetail() {
             <DetailRow label="SQUAWK" value={data.squawk as string || "----"} accent={accent} />
             <DetailRow label="GROUND" value={(data.onGround as boolean) ? "YES" : "NO"} accent={accent} />
             <DetailRow label="POSITION" value={`${(data.lat as number)?.toFixed(4)}°N ${(data.lon as number)?.toFixed(4)}°E`} accent={accent} />
+
+            {/* Track / Untrack button */}
+            <button
+              onClick={handleTrackToggle}
+              className="mt-1 rounded-sm px-2 py-1 text-[7px] font-bold tracking-[1px] transition-colors cursor-pointer"
+              style={{
+                border: `1px solid ${isTracking ? '#FF4444' : '#FFC800'}40`,
+                color: isTracking ? '#FF4444' : '#FFC800',
+                backgroundColor: isTracking ? 'rgba(255,68,68,0.1)' : 'rgba(255,200,0,0.1)',
+              }}
+            >
+              {isTracking ? '■ STOP TRACKING' : '▶ TRACK FLIGHT'}
+            </button>
           </>
         )}
 

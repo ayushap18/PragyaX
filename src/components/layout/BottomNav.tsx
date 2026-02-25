@@ -85,9 +85,8 @@ export default function BottomNav() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-20 flex h-14 flex-col"
+      className="fixed bottom-0 left-0 right-0 z-20 flex h-14 flex-col panel-tier-2"
       style={{
-        backgroundColor: "var(--bg-primary)",
         borderTop: "1px solid var(--border-subtle)",
       }}
     >

@@ -5,7 +5,7 @@ export function createAircraftCanvas(
   headingDeg: number,
   color: string = '#00FFD1'
 ): string {
-  const size = 32;
+  const size = 40;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -16,28 +16,31 @@ export function createAircraftCanvas(
   ctx.translate(size / 2, size / 2);
   ctx.rotate((headingDeg * Math.PI) / 180);
 
+  // Scale up the silhouette by 1.35x for larger icon
+  const s = 1.35;
+
   // Aircraft silhouette — fuselage + swept wings + tail
   ctx.beginPath();
-  ctx.moveTo(0, -12);    // nose
-  ctx.lineTo(1.5, -8);
-  ctx.lineTo(1.5, -3);
-  ctx.lineTo(10, 0);     // right wing tip
-  ctx.lineTo(10, 2);
-  ctx.lineTo(1.5, 1);
-  ctx.lineTo(1.5, 6);
-  ctx.lineTo(4, 9);      // right tail
-  ctx.lineTo(4, 10);
-  ctx.lineTo(1, 8);
-  ctx.lineTo(0, 10);     // tail center
-  ctx.lineTo(-1, 8);
-  ctx.lineTo(-4, 10);    // left tail
-  ctx.lineTo(-4, 9);
-  ctx.lineTo(-1.5, 6);
-  ctx.lineTo(-1.5, 1);
-  ctx.lineTo(-10, 2);    // left wing tip
-  ctx.lineTo(-10, 0);
-  ctx.lineTo(-1.5, -3);
-  ctx.lineTo(-1.5, -8);
+  ctx.moveTo(0, -12 * s);      // nose
+  ctx.lineTo(1.5 * s, -8 * s);
+  ctx.lineTo(1.5 * s, -3 * s);
+  ctx.lineTo(10 * s, 0);       // right wing tip
+  ctx.lineTo(10 * s, 2 * s);
+  ctx.lineTo(1.5 * s, 1 * s);
+  ctx.lineTo(1.5 * s, 6 * s);
+  ctx.lineTo(4 * s, 9 * s);    // right tail
+  ctx.lineTo(4 * s, 10 * s);
+  ctx.lineTo(1 * s, 8 * s);
+  ctx.lineTo(0, 10 * s);       // tail center
+  ctx.lineTo(-1 * s, 8 * s);
+  ctx.lineTo(-4 * s, 10 * s);  // left tail
+  ctx.lineTo(-4 * s, 9 * s);
+  ctx.lineTo(-1.5 * s, 6 * s);
+  ctx.lineTo(-1.5 * s, 1 * s);
+  ctx.lineTo(-10 * s, 2 * s);  // left wing tip
+  ctx.lineTo(-10 * s, 0);
+  ctx.lineTo(-1.5 * s, -3 * s);
+  ctx.lineTo(-1.5 * s, -8 * s);
   ctx.closePath();
 
   ctx.fillStyle = color;
@@ -45,18 +48,98 @@ export function createAircraftCanvas(
 
   // Glow
   ctx.shadowColor = color;
-  ctx.shadowBlur = 6;
+  ctx.shadowBlur = 8;
   ctx.fill();
 
   // Cockpit highlight
   ctx.shadowBlur = 0;
   ctx.beginPath();
-  ctx.arc(0, -9, 1, 0, Math.PI * 2);
+  ctx.arc(0, -9 * s, 1.2, 0, Math.PI * 2);
   ctx.fillStyle = '#FFFFFF';
-  ctx.globalAlpha = 0.7;
+  ctx.globalAlpha = 0.8;
   ctx.fill();
 
   ctx.restore();
+  return canvas.toDataURL();
+}
+
+/**
+ * Draw a satellite icon on a canvas and return the data URL.
+ * Draws a recognisable satellite silhouette: central body + two solar panels.
+ */
+export function createSatelliteCanvas(color: string = '#FFA500'): string {
+  const size = 28;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  ctx.clearRect(0, 0, size, size);
+
+  // Glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+
+  // Central satellite body — small diamond shape
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 4);
+  ctx.lineTo(cx + 3, cy);
+  ctx.lineTo(cx, cy + 4);
+  ctx.lineTo(cx - 3, cy);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+
+  // Solar panel left — rectangle angled at 45deg
+  ctx.save();
+  ctx.translate(cx - 3, cy);
+  ctx.rotate(-Math.PI / 4);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.7;
+  ctx.fillRect(-8, -3, 8, 6);
+  // Panel lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(-4, -3);
+  ctx.lineTo(-4, 3);
+  ctx.stroke();
+  ctx.restore();
+
+  // Solar panel right — rectangle angled at 45deg
+  ctx.save();
+  ctx.translate(cx + 3, cy);
+  ctx.rotate(-Math.PI / 4);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.7;
+  ctx.fillRect(0, -3, 8, 6);
+  // Panel lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(4, -3);
+  ctx.lineTo(4, 3);
+  ctx.stroke();
+  ctx.restore();
+
+  // Antenna dish on top
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 4);
+  ctx.lineTo(cx + 1, cy - 7);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx + 1, cy - 8, 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.globalAlpha = 0.6;
+  ctx.fill();
+
   return canvas.toDataURL();
 }
 

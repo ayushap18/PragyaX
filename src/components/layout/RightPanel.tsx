@@ -18,9 +18,8 @@ export default function RightPanel() {
 
   return (
     <div
-      className="fixed bottom-14 right-0 top-[38px] z-10 flex w-[180px] flex-col overflow-y-auto overflow-x-hidden scrollbar-hide"
+      className="fixed bottom-14 right-0 top-[38px] z-10 flex w-[180px] flex-col overflow-y-auto overflow-x-hidden scrollbar-hide panel-tier-1 panel-gradient-border"
       style={{
-        backgroundColor: "var(--bg-panel)",
         borderLeft: "1px solid var(--border-subtle)",
       }}
     >

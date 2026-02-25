@@ -5,6 +5,7 @@ import { useCesiumStore } from '@/stores/cesiumStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useLayerStore } from '@/stores/layerStore';
 import { computeSatellitePosition } from '@/services/satelliteService';
+import { createSatelliteCanvas } from '@/utils/cesiumHelpers';
 import type { SatelliteTLE } from '@/types';
 
 export default function SatelliteLayer() {
@@ -15,6 +16,7 @@ export default function SatelliteLayer() {
   const entityIdsRef = useRef<Set<string>>(new Set());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tlesRef = useRef<SatelliteTLE[]>([]);
+  const satImageRef = useRef<string | null>(null);
 
   // Keep a ref to TLEs for the interval callback
   useEffect(() => {
@@ -38,6 +40,12 @@ export default function SatelliteLayer() {
       return;
     }
 
+    // Create satellite icon image once
+    if (!satImageRef.current) {
+      satImageRef.current = createSatelliteCanvas('#FFA500');
+    }
+    const satImage = satImageRef.current;
+
     // Create entities for all satellites
     for (const sat of satelliteTLEs) {
       const entityId = `sat-${sat.noradId}`;
@@ -46,11 +54,11 @@ export default function SatelliteLayer() {
         viewer.entities.add({
           id: entityId,
           position: cesium.Cartesian3.fromDegrees(0, 0, 400000), // temp position
-          point: {
-            pixelSize: 5,
-            color: cesium.Color.fromCssColorString('#FFA500'),
-            outlineColor: cesium.Color.fromCssColorString('#FFA50060'),
-            outlineWidth: 3,
+          billboard: {
+            image: satImage,
+            width: 22,
+            height: 22,
+            verticalOrigin: cesium.VerticalOrigin.CENTER,
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
           },
           label: {
