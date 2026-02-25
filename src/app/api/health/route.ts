@@ -4,36 +4,21 @@ import { cache } from '@/lib/cache';
 export async function GET() {
   const stats = cache.getStats();
 
-  const upstreams: Record<string, { status: string; lastFetch: number | null }> = {
-    opensky: {
-      status: cache.has('flights-fallback') ? 'connected' : 'unknown',
-      lastFetch: cache.getAge('flights-fallback'),
+  // Only expose connection status — never reveal which API keys are configured
+  const upstreams: Record<string, { status: string }> = {
+    flights: {
+      status: cache.has('flights-fallback') ? 'connected' : 'standby',
     },
-    usgs: {
-      status: stats.keys.some((k) => k.startsWith('earthquakes-')) ? 'connected' : 'unknown',
-      lastFetch: null,
+    seismic: {
+      status: stats.keys.some((k) => k.startsWith('earthquakes-')) ? 'connected' : 'standby',
     },
-    celestrak: {
-      status: stats.keys.some((k) => k.startsWith('satellites-')) ? 'connected' : 'unknown',
-      lastFetch: null,
-    },
-    openweather: {
-      status: process.env.OPENWEATHER_API_KEY ? 'configured' : 'no_key',
-      lastFetch: null,
-    },
-    anthropic: {
-      status: process.env.ANTHROPIC_API_KEY ? 'configured' : 'no_key',
-      lastFetch: null,
-    },
-    gemini: {
-      status: process.env.GEMINI_API_KEY ? 'configured' : 'no_key',
-      lastFetch: null,
+    orbital: {
+      status: stats.keys.some((k) => k.startsWith('satellites-')) ? 'connected' : 'standby',
     },
   };
 
   return NextResponse.json({
     status: 'operational',
-    uptime: process.uptime(),
     cacheEntries: stats.entries,
     upstreams,
     timestamp: new Date().toISOString(),

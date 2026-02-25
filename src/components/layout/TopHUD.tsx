@@ -5,6 +5,7 @@ import { useHUDStore } from "@/stores/hudStore";
 import { useModeStore } from "@/stores/modeStore";
 import { useDataStore } from "@/stores/dataStore";
 import { useAIStore } from "@/stores/aiStore";
+import { useConnectionStore, useAnomalyStore, useVesselStore } from "@/stores/exclusiveStores";
 import { MODE_ACCENTS } from "@/constants/modes";
 import { SFX } from "@/utils/audioEngine";
 import type { ActiveWindow } from "@/stores/modeStore";
@@ -26,7 +27,11 @@ export default function TopHUD() {
   const tickerMessages = useAIStore((s) => s.tickerMessages);
   const currentTickerIndex = useAIStore((s) => s.currentTickerIndex);
 
-  const realEntityCount = flights.length + earthquakes.length + satelliteTLEs.length;
+  const vessels = useVesselStore((s) => s.vessels);
+  const connectionStatus = useConnectionStore((s) => s.connectionStatus);
+  const anomalyCount = useAnomalyStore((s) => s.anomalies.filter((a) => !a.acknowledged).length);
+
+  const realEntityCount = flights.length + earthquakes.length + satelliteTLEs.length + vessels.length;
   const entityCount = realEntityCount > 0 ? realEntityCount : 8414;
 
   useEffect(() => {
@@ -153,6 +158,15 @@ export default function TopHUD() {
         <MetricChip label="LAT" value={`${latency}ms`} color={latency < 20 ? "var(--accent-green)" : "var(--accent-amber)"} />
         <MetricChip label="FEED" value={`${feedQuality}%`} color={feedQuality > 97 ? "var(--accent-green)" : "var(--accent-amber)"} />
         <MetricChip label="NET" value="SECURE" color="var(--accent-green)" />
+        <MetricChip
+          label="WS"
+          value={connectionStatus === 'connected' ? 'LIVE' : connectionStatus === 'connecting' ? 'CONN' : 'POLL'}
+          color={connectionStatus === 'connected' ? "var(--accent-green)" : "var(--accent-amber)"}
+        />
+        {anomalyCount > 0 && (
+          <MetricChip label="ANOM" value={`${anomalyCount}`} color="#FF4444" />
+        )}
+        <MetricChip label="VES" value={`${vessels.length}`} color={accent} />
         <div className="mx-1 h-3 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />
         <span className="animate-counter-tick text-[9px] font-bold tabular-nums" style={{ color: activeWindow === 'CHANAKYA' ? chanakyaAccent : accent }}>
           {utcTime}

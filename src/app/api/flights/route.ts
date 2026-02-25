@@ -132,7 +132,7 @@ export async function GET(request: Request) {
           source: 'opensky',
         });
       }
-      return errorResponse('UPSTREAM_ERROR', `OpenSky returned ${res.status}`, 502);
+      return errorResponse('UPSTREAM_ERROR', 'Flight data temporarily unavailable', 502);
     }
 
     const data = await res.json();
@@ -155,7 +155,7 @@ export async function GET(request: Request) {
       cached: false,
       source: 'opensky',
     });
-  } catch (err) {
+  } catch {
     const fallback = cache.get<{ time: number; aircraft: Aircraft[] }>('flights-fallback');
     if (fallback) {
       return NextResponse.json({
@@ -167,10 +167,6 @@ export async function GET(request: Request) {
         source: 'opensky',
       });
     }
-    return errorResponse(
-      'FETCH_ERROR',
-      err instanceof Error ? err.message : 'Failed to fetch flights',
-      502
-    );
+    return errorResponse('INTERNAL_ERROR', 'Failed to fetch flight data', 502);
   }
 }

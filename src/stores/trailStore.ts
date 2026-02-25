@@ -15,18 +15,32 @@ interface TrailStore {
 }
 
 const MAX_TRAIL_LENGTH = 20;
+const MAX_TRACKED_ENTITIES = 500;
 
 export const useTrailStore = create<TrailStore>((set) => ({
   trails: new Map(),
   pushPosition: (id, lat, lon, alt) =>
     set((state) => {
       const trails = new Map(state.trails);
-      const existing = trails.get(id) || [];
-      const updated = [...existing, { lat, lon, alt, time: Date.now() }];
-      if (updated.length > MAX_TRAIL_LENGTH) {
-        updated.splice(0, updated.length - MAX_TRAIL_LENGTH);
+
+      // Enforce max tracked entities to prevent unbounded memory growth
+      if (trails.size >= MAX_TRACKED_ENTITIES && !trails.has(id)) {
+        const firstKey = trails.keys().next().value;
+        if (firstKey !== undefined) trails.delete(firstKey);
       }
-      trails.set(id, updated);
+
+      const existing = trails.get(id);
+      if (existing) {
+        // Mutate in-place instead of spread + splice
+        existing.push({ lat, lon, alt, time: Date.now() });
+        if (existing.length > MAX_TRAIL_LENGTH) {
+          existing.shift();
+        }
+        trails.set(id, existing);
+      } else {
+        trails.set(id, [{ lat, lon, alt, time: Date.now() }]);
+      }
+
       return { trails };
     }),
   clearTrail: (id) =>

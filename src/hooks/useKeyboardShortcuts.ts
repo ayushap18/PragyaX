@@ -19,7 +19,7 @@ const MODE_KEYS: Record<string, VisualMode> = {
 
 let isAutoRotating = false;
 
-export function useKeyboardShortcuts(booted: boolean, showShortcuts: boolean, setShowShortcuts: (v: boolean) => void) {
+export function useKeyboardShortcuts(booted: boolean, showShortcuts: boolean, setShowShortcuts: (v: boolean) => void, onToggleGPS?: () => void) {
   useEffect(() => {
     if (!booted) return;
 
@@ -71,6 +71,14 @@ export function useKeyboardShortcuts(booted: boolean, showShortcuts: boolean, se
         e.preventDefault();
         SFX.toggle();
         useLayerStore.getState().toggleLayer('earthquakes');
+        return;
+      }
+
+      // Toggle GPS realtime location
+      if (key === 'g' || key === 'G') {
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        onToggleGPS?.();
         return;
       }
 
@@ -126,7 +134,7 @@ export function useKeyboardShortcuts(booted: boolean, showShortcuts: boolean, se
         isAutoRotating = false;
       }
     };
-  }, [booted, showShortcuts, setShowShortcuts]);
+  }, [booted, showShortcuts, setShowShortcuts, onToggleGPS]);
 }
 
 function spinGlobe() {

@@ -4,12 +4,34 @@ import { useModeStore } from "@/stores/modeStore";
 import { useHUDStore } from "@/stores/hudStore";
 import { useMapStore } from "@/stores/mapStore";
 import { useDataStore } from "@/stores/dataStore";
+import { useAnomalyStore, useGeofenceStore, useVesselStore } from "@/stores/exclusiveStores";
 import { MODE_ACCENTS } from "@/constants/modes";
 import IntelBrief from "@/components/panels/IntelBrief";
 import DataLayers from "@/components/panels/DataLayers";
 import type { IntelEvent } from "@/stores/hudStore";
+import { Radio, AlertTriangle, Shield, Map, LayoutGrid, Activity, Anchor, ShieldCheck, Crosshair } from "lucide-react";
 
-export default function LeftPanel() {
+interface LeftPanelProps {
+  onOpenSpectrum?: () => void;
+  onOpenAnomalies?: () => void;
+  onOpenGeofences?: () => void;
+  onOpenMissions?: () => void;
+  onOpenSurveillanceGrid?: () => void;
+  onToggleGPS?: () => void;
+  gpsActive?: boolean;
+  gpsAccuracy?: number | null;
+}
+
+export default function LeftPanel({
+  onOpenSpectrum,
+  onOpenAnomalies,
+  onOpenGeofences,
+  onOpenMissions,
+  onOpenSurveillanceGrid,
+  onToggleGPS,
+  gpsActive,
+  gpsAccuracy,
+}: LeftPanelProps) {
   const currentMode = useModeStore((s) => s.current);
   const accent = MODE_ACCENTS[currentMode];
   const lat = useMapStore((s) => s.lat);
@@ -23,10 +45,13 @@ export default function LeftPanel() {
   const flights = useDataStore((s) => s.flights);
   const earthquakes = useDataStore((s) => s.earthquakes);
   const satelliteTLEs = useDataStore((s) => s.satelliteTLEs);
+  const anomalyCount = useAnomalyStore((s) => s.anomalies.filter((a) => !a.acknowledged).length);
+  const geofenceCount = useGeofenceStore((s) => s.geofences.filter((g) => g.armed).length);
+  const vesselCount = useVesselStore((s) => s.vessels.length);
 
   return (
     <div
-      className="fixed bottom-14 left-0 top-[38px] z-10 flex w-[220px] flex-col overflow-hidden"
+      className="fixed bottom-14 left-0 top-[38px] z-10 flex w-[220px] flex-col overflow-y-auto overflow-x-hidden scrollbar-thin"
       style={{
         backgroundColor: "var(--bg-panel)",
         borderRight: "1px solid var(--border-subtle)",
@@ -73,8 +98,26 @@ export default function LeftPanel() {
         </div>
       </div>
 
+      {/* Exclusive Feature Quick Access */}
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2 px-3 py-[5px]">
+          <span className="text-[7px] font-semibold tracking-[1.2px]" style={{ color: `${accent}80` }}>
+            OPERATIONS
+          </span>
+          <div className="h-px flex-1" style={{ backgroundColor: `${accent}26` }} />
+        </div>
+        <div className="flex flex-wrap gap-[3px] px-3 pb-1">
+          <OpButton label="SPECTRUM" icon={<Radio size={8} />} onClick={onOpenSpectrum} accent={accent} />
+          <OpButton label={`ANOMALY${anomalyCount > 0 ? ` (${anomalyCount})` : ''}`} icon={<AlertTriangle size={8} />} onClick={onOpenAnomalies} accent={accent} alert={anomalyCount > 0} />
+          <OpButton label={`GEOFENCE${geofenceCount > 0 ? ` (${geofenceCount})` : ''}`} icon={<Shield size={8} />} onClick={onOpenGeofences} accent={accent} />
+          <OpButton label="MISSION" icon={<Map size={8} />} onClick={onOpenMissions} accent={accent} />
+          <OpButton label="GRID" icon={<LayoutGrid size={8} />} onClick={onOpenSurveillanceGrid} accent={accent} />
+          <OpButton label={gpsActive ? `GPS${gpsAccuracy ? ` ±${Math.round(gpsAccuracy)}m` : ''}` : 'GPS'} icon={<Crosshair size={8} />} onClick={onToggleGPS} accent={accent} active={gpsActive} />
+        </div>
+      </div>
+
       {/* System Status */}
-      <div className="mt-auto flex flex-col bg-grid-dots">
+      <div className="flex flex-col bg-grid-dots shrink-0">
         <div className="flex items-center gap-2 px-3 py-2">
           <span className="text-[7px] font-semibold tracking-[1.2px]" style={{ color: `${accent}80` }}>
             SYSTEM STATUS
@@ -90,6 +133,7 @@ export default function LeftPanel() {
           <SubsystemDot label="SIGINT" healthy={feedQuality > 95} accent={accent} />
           <SubsystemDot label="NRO" healthy={satelliteTLEs.length > 0} accent={accent} />
           <SubsystemDot label="SEISMIC" healthy={earthquakes.length > 0} accent={accent} />
+          <SubsystemDot label="GPS" healthy={gpsActive || false} accent={accent} />
         </div>
 
         <StatusRow label="UPLINK" value="CONNECTED" valueColor="var(--accent-green)" dot />
@@ -105,9 +149,10 @@ export default function LeftPanel() {
           <div className="h-px flex-1" style={{ backgroundColor: `${accent}26` }} />
         </div>
 
-        <StatusRow label="ACTIVE FEEDS" value={entityCount.toLocaleString()} valueColor={accent} />
-        <StatusRow label="ANOMALIES" value="3" valueColor="var(--accent-amber)" />
-        <StatusRow label="ALERTS" value="1 ACTIVE" valueColor="rgba(255,100,100,0.8)" blink />
+        <StatusRow label="ACTIVE FEEDS" value={entityCount.toLocaleString()} valueColor={accent} icon={<Activity size={7} />} />
+        <StatusRow label="ANOMALIES" value={String(anomalyCount)} valueColor={anomalyCount > 0 ? "var(--accent-amber)" : accent} blink={anomalyCount > 0} icon={<AlertTriangle size={7} />} />
+        <StatusRow label="VESSELS" value={String(vesselCount)} valueColor={accent} icon={<Anchor size={7} />} />
+        <StatusRow label="GEOFENCES" value={`${geofenceCount} ARMED`} valueColor={geofenceCount > 0 ? "var(--accent-green)" : accent} icon={<ShieldCheck size={7} />} />
         <StatusRow label="LAST UPDATE" value={`${lastUpdate}s AGO`} valueColor="rgba(0,255,200,0.6)" />
 
         {/* Coordinate readout */}
@@ -119,7 +164,7 @@ export default function LeftPanel() {
           }}
         >
           <span className="text-[7px] font-bold tabular-nums" style={{ color: accent }}>
-            {lat.toFixed(4)}°N {Math.abs(lon).toFixed(4)}°W
+            {Math.abs(lat).toFixed(4)}°{lat >= 0 ? 'N' : 'S'} {Math.abs(lon).toFixed(4)}°{lon >= 0 ? 'E' : 'W'}
           </span>
           <span className="text-[6px]" style={{ color: "rgba(200,230,255,0.3)" }}>
             MGRS: 18S UJ 23417 06519
@@ -136,18 +181,23 @@ function StatusRow({
   valueColor,
   dot,
   blink,
+  icon,
 }: {
   label: string;
   value: string;
   valueColor: string;
   dot?: boolean;
   blink?: boolean;
+  icon?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between px-3 py-[3px]">
-      <span className="text-[6px]" style={{ color: "rgba(200,230,255,0.4)" }}>
-        {label}
-      </span>
+      <div className="flex items-center gap-[4px]">
+        {icon && <span style={{ color: "rgba(200,230,255,0.4)" }}>{icon}</span>}
+        <span className="text-[6px]" style={{ color: "rgba(200,230,255,0.4)" }}>
+          {label}
+        </span>
+      </div>
       <div className="flex items-center gap-1">
         {dot && (
           <div className="h-[3px] w-[3px] rounded-full animate-pulse-slow" style={{ backgroundColor: valueColor }} />
@@ -201,5 +251,23 @@ function SubsystemDot({ label, healthy, accent }: { label: string; healthy: bool
         {label}
       </span>
     </div>
+  );
+}
+
+function OpButton({ label, icon, onClick, accent, alert, active }: { label: string; icon?: React.ReactNode; onClick?: () => void; accent: string; alert?: boolean; active?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-[6px] tracking-[0.5px] px-[6px] py-[3px] rounded-sm cursor-pointer hover:brightness-150 transition-colors flex items-center gap-[3px]"
+      style={{
+        color: active ? '#000' : alert ? '#FF4444' : `${accent}80`,
+        border: `1px solid ${active ? accent : alert ? '#FF444440' : `${accent}20`}`,
+        backgroundColor: active ? accent : alert ? 'rgba(255,68,68,0.08)' : 'transparent',
+        fontWeight: active ? 700 : 400,
+      }}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }

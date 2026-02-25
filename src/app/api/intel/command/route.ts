@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rateLimit';
-import { errorResponse, rateLimitResponse, getClientIP } from '@/lib/apiHelpers';
+import { errorResponse, rateLimitResponse, getClientIP, parseBody, sanitizeForPrompt, validateCoordinates } from '@/lib/apiHelpers';
 import { COMMAND_PARSER_SYSTEM_PROMPT } from '@/lib/prompts';
 
 const checkRate = rateLimit('intel-command', { maxRequests: 60, windowMs: 60_000 });
@@ -12,26 +12,32 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return errorResponse('NO_API_KEY', 'Anthropic API key not configured', 503);
+    return errorResponse('SERVICE_UNAVAILABLE', 'AI service not available', 503);
   }
 
   try {
-    const body = await request.json();
-    const { command, context } = body;
+    const result = await parseBody<{ command: string; context?: Record<string, unknown> }>(request);
+    if (result.error) return result.error;
+    const { command, context } = result.data;
 
     if (!command || typeof command !== 'string') {
       return errorResponse('INVALID_REQUEST', 'Missing command string', 400);
     }
 
-    const userPrompt = `Context:
-- Current city: ${context?.currentCity || 'Unknown'}
-- Current position: ${context?.currentLat || 0}°N, ${context?.currentLon || 0}°E
-- Current mode: ${context?.currentMode || 'NORMAL'}
-- Active layers: ${(context?.activeLayers || []).join(', ')}
-- Flights in view: ${context?.flightCount || 0}
-- Satellites tracked: ${context?.satelliteCount || 0}
+    const sanitizedCommand = sanitizeForPrompt(command, 300);
+    const coords = validateCoordinates(context?.currentLat, context?.currentLon);
+    const city = sanitizeForPrompt(String(context?.currentCity || 'Unknown'), 50);
+    const mode = sanitizeForPrompt(String(context?.currentMode || 'NORMAL'), 20);
 
-User command: "${command}"`;
+    const userPrompt = `Context:
+- Current city: ${city}
+- Current position: ${coords ? `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}` : 'Unknown'}
+- Current mode: ${mode}
+- Active layers: ${Array.isArray(context?.activeLayers) ? (context.activeLayers as string[]).slice(0, 20).join(', ') : 'none'}
+- Flights in view: ${Math.max(0, Math.min(99999, Number(context?.flightCount) || 0))}
+- Satellites tracked: ${Math.max(0, Math.min(99999, Number(context?.satelliteCount) || 0))}
+
+User command: "${sanitizedCommand}"`;
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -51,7 +57,7 @@ User command: "${command}"`;
     });
 
     if (!res.ok) {
-      return errorResponse('ANTHROPIC_ERROR', `Claude API error: ${res.status}`, 502);
+      return errorResponse('UPSTREAM_ERROR', 'AI service returned an error', 502);
     }
 
     const data = await res.json();
@@ -62,27 +68,28 @@ User command: "${command}"`;
 
     try {
       const parsed = JSON.parse(responseText);
+      // Only allow expected fields through (prevent prototype pollution)
       return NextResponse.json({
-        ...parsed,
+        action: String(parsed.action || 'alert'),
+        message: String(parsed.message || ''),
+        severity: String(parsed.severity || 'INFO'),
+        target: parsed.target != null ? String(parsed.target) : undefined,
+        value: parsed.value != null ? parsed.value : undefined,
         parsed: true,
         confidence: 0.9,
-        narration: `Executing: ${command}`,
+        narration: `Executing: ${sanitizedCommand}`,
       });
     } catch {
       return NextResponse.json({
         action: 'alert',
-        message: `Could not parse command: "${command}"`,
+        message: 'Command not understood',
         severity: 'INFO',
         parsed: false,
         confidence: 0,
         narration: 'Command not understood',
       });
     }
-  } catch (err) {
-    return errorResponse(
-      'FETCH_ERROR',
-      err instanceof Error ? err.message : 'Failed to parse command',
-      502
-    );
+  } catch {
+    return errorResponse('INTERNAL_ERROR', 'Failed to process command', 502);
   }
 }

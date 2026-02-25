@@ -9,6 +9,7 @@ const SHORTCUTS = [
   { key: 'F', action: 'Toggle flights layer' },
   { key: 'S', action: 'Toggle satellites layer' },
   { key: 'E', action: 'Toggle earthquakes layer' },
+  { key: 'G', action: 'Toggle GPS realtime location' },
   { key: 'SPACE', action: 'Toggle globe auto-rotation' },
   { key: 'Cmd+K', action: 'Open command modal' },
   { key: 'ESC', action: 'Close modal / overlay' },

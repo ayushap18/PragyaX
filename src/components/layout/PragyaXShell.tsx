@@ -31,8 +31,18 @@ import ChanakyaBottomNav from "@/components/chanakya/ChanakyaBottomNav";
 import ISROMissionClock from "@/components/chanakya/ISROMissionClock";
 import AlertToast from "@/components/ui/AlertToast";
 import ShortcutOverlay from "@/components/ui/ShortcutOverlay";
+import TimelineScrubber from "@/components/ui/TimelineScrubber";
+import SpectrumAnalyzer from "@/components/panels/SpectrumAnalyzer";
+import AnomalyPanel from "@/components/panels/AnomalyPanel";
+import GeofencePanel from "@/components/panels/GeofencePanel";
+import MissionPlanner from "@/components/panels/MissionPlanner";
+import SurveillanceGrid from "@/components/panels/SurveillanceGrid";
 import { useChanakyaMode } from "@/hooks/useChanakyaMode";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useGeofenceEngine } from "@/hooks/useGeofenceEngine";
+import { useAnomalyEngine } from "@/hooks/useAnomalyEngine";
+import { useVesselPolling } from "@/hooks/useVesselPolling";
+import { useRealtimeLocation } from "@/hooks/useRealtimeLocation";
 
 const CesiumViewer = dynamic(
   () => import("@/components/map/CesiumViewer"),
@@ -42,14 +52,36 @@ const CesiumViewer = dynamic(
 export default function PragyaXShell() {
   const [booted, setBooted] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showSpectrum, setShowSpectrum] = useState(false);
+  const [showAnomalies, setShowAnomalies] = useState(false);
+  const [showGeofences, setShowGeofences] = useState(false);
+  const [showMissions, setShowMissions] = useState(false);
+  const [showSurveillanceGrid, setShowSurveillanceGrid] = useState(false);
   // Manages auto-fly, layer toggling on mode switch
   const { isChanakya } = useChanakyaMode();
 
-  // Global keyboard shortcuts
-  useKeyboardShortcuts(booted, showShortcuts, setShowShortcuts);
+  // Exclusive feature engines — always active when booted
+  useGeofenceEngine();
+  useAnomalyEngine();
+  useVesselPolling();
+
+  // Realtime GPS location tracking
+  const { gps, toggle: toggleGPS } = useRealtimeLocation();
+
+  // Global keyboard shortcuts (after toggleGPS is available)
+  useKeyboardShortcuts(booted, showShortcuts, setShowShortcuts, toggleGPS);
 
   const handleBootComplete = useCallback(() => {
     setBooted(true);
+  }, []);
+
+  // Panel toggle handlers — close other panels when opening one
+  const openPanel = useCallback((panel: string) => {
+    setShowSpectrum(panel === 'spectrum');
+    setShowAnomalies(panel === 'anomalies');
+    setShowGeofences(panel === 'geofences');
+    setShowMissions(panel === 'missions');
+    setShowSurveillanceGrid(panel === 'grid');
   }, []);
 
   return (
@@ -75,10 +107,23 @@ export default function PragyaXShell() {
           {/* Standard WORLDVIEW panels */}
           {!isChanakya && (
             <>
-              <LeftPanel />
+              <LeftPanel
+                onOpenSpectrum={() => openPanel('spectrum')}
+                onOpenAnomalies={() => openPanel('anomalies')}
+                onOpenGeofences={() => openPanel('geofences')}
+                onOpenMissions={() => openPanel('missions')}
+                onOpenSurveillanceGrid={() => openPanel('grid')}
+                onToggleGPS={toggleGPS}
+                gpsActive={gps.active}
+                gpsAccuracy={gps.accuracy}
+              />
               <RightPanel />
               <BottomNav />
               <MiniGlobe />
+              {/* Timeline scrubber — above bottom nav */}
+              <div className="fixed bottom-14 left-0 right-0 z-20">
+                <TimelineScrubber />
+              </div>
             </>
           )}
 
@@ -111,6 +156,13 @@ export default function PragyaXShell() {
           <CommandModal />
           <CCTVPanel />
           <EntityDetail />
+
+          {/* Exclusive feature panels */}
+          {showSpectrum && <SpectrumAnalyzer onClose={() => setShowSpectrum(false)} />}
+          {showAnomalies && <AnomalyPanel onClose={() => setShowAnomalies(false)} />}
+          {showGeofences && <GeofencePanel onClose={() => setShowGeofences(false)} />}
+          {showMissions && <MissionPlanner onClose={() => setShowMissions(false)} />}
+          {showSurveillanceGrid && <SurveillanceGrid onClose={() => setShowSurveillanceGrid(false)} />}
 
           {/* Shortcut overlay */}
           {showShortcuts && <ShortcutOverlay onClose={() => setShowShortcuts(false)} />}
